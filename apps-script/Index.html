@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<?!= include('Css'); ?>
+</head>
+<body>
+
+<div id="carregando"><div class="giro"></div><div id="carregando-msg">Carregando dados da planilha…</div>
+  <div id="pin-box" style="display:none;flex-direction:column;gap:10px;width:240px">
+    <input id="pin-nome" placeholder="Seu nome (ex.: Mayara)" maxlength="40" style="padding:12px;border:1px solid #ecdadd;border-radius:10px;font:16px Jost,sans-serif;text-align:center">
+    <input id="pin-cod" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" style="padding:12px;border:1px solid #ecdadd;border-radius:10px;font:16px Jost,sans-serif;text-align:center">
+    <button id="pin-ok" style="padding:12px;border:none;border-radius:10px;background:#c9607c;color:#fff;font:500 15px Jost,sans-serif">Entrar</button>
+  </div></div>
+<div id="toast"></div>
+<div id="modal-copia"><div class="cx">
+  <b>Copie o texto abaixo</b>
+  <textarea id="modal-copia-txt" readonly></textarea>
+  <button onclick="document.getElementById('modal-copia').classList.remove('show')">Fechar</button>
+</div></div>
+
+<div class="shell-topo">
+  <div class="shell-marca"><span class="serifa">GM CelebrArt</span><span class="sub">Central Pegue &amp; Monte</span></div>
+  <nav class="shell-tabs">
+    <button class="shell-tab sel" data-aba="orcamento">1 · Orçamento</button>
+    <button class="shell-tab" data-aba="proposta">2 · Proposta</button>
+    <button class="shell-tab" data-aba="contrato">3 · Contrato</button>
+  </nav>
+</div>
+
+<section class="aba ativa" id="aba-orcamento">
+
+<div class="card">
+  <div class="acervo-topo">
+    <span class="lbl">Itens do acervo</span>
+    <button class="kit clear" data-kit="clear" id="bt-limpar">Limpar seleção</button>
+  </div>
+  <ul id="list"></ul>
+  <div class="addrow">
+    <input type="text" class="an" id="novo-nome" placeholder="Novo item (ex.: Cesto de flores)" maxlength="42">
+    <input type="number" class="av" id="novo-valor" placeholder="R$" min="0" step="0.01" inputmode="decimal">
+    <button id="novo-add" title="Adicionar ao acervo">+</button>
+  </div>
+  <div class="addrow" style="margin-top:6px">
+    <select id="novo-cat" style="flex:1 1 auto"></select>
+  </div>
+  <div class="pct" style="margin-top:12px;border-top:1px solid #f3e8ea;padding-top:12px">
+    <span style="font-size:13px;color:#8a6b70">Cobrar</span>
+    <input type="number" id="pct" value="20" min="0" max="100">
+    <span style="font-size:13px;color:#8a6b70">% do valor de compra</span>
+  </div>
+  <p class="hint" style="text-align:left;margin-top:10px">Toque em ✎ para mudar nome e valor de compra, ou em × para remover.
+    As mudanças vão direto para a planilha e aparecem nos dois celulares.</p>
+  <div id="orc-aviso" class="orc-aviso"></div>
+  <div class="publicar">
+    <button id="bt-recarregar-acervo">↻ Atualizar lista da planilha</button>
+    <a class="planilha-link" id="link-planilha" href="#" target="_blank" rel="noopener">Abrir a planilha (acervo, kits, extras, temas, histórico)</a>
+  </div>
+</div>
+
+<div class="card">
+  <span class="lbl">Por evento</span>
+  <div class="mod-toggle" id="orc-mod">
+    <button data-mod="montado" class="on">Decoração montada</button>
+    <button data-mod="pm">Pegue e Monte</button>
+  </div>
+  <div class="row"><span>Adesivo personalizado (uso único)</span><input type="number" id="adesivo" placeholder="0,00"></div>
+  <div class="row"><span>Arco de balões</span><input type="number" id="arco" placeholder="0,00"></div>
+  <div class="row"><span>Montagem + retirada</span><input type="number" id="montagem" placeholder="0,00"></div>
+  <div class="row"><span>Frete / deslocamento</span><input type="number" id="frete" placeholder="0,00"></div>
+  <p class="hint" id="orc-mod-hint" style="text-align:left">Montagem, entrega e retirada feitas pela equipe.</p>
+</div>
+
+<button class="ponte" id="orc-para-proposta">Enviar para a Proposta →</button>
+
+<div class="total">
+  <div><div class="t1">Total a cobrar</div><div class="t2" id="totalVal">R$ 0</div></div>
+  <button id="copy">Copiar</button>
+</div>
+<p class="hint" id="copied"></p>
+
+</section>
+
+<section class="aba" id="aba-proposta">
+
+
+<div class="topo">
+  <img id="logo-topo" alt="GM CelebrArt">
+  <div>
+    <h1 class="serif">Proposta</h1>
+    <div class="et">GM CelebrArt</div>
+  </div>
+  <div class="dir">
+    <button class="ic" id="bt-modelos" title="Modelos salvos">📁</button>
+    <button class="ic" id="bt-novo" title="Nova proposta">✛</button>
+  </div>
+</div>
+
+<div class="envoltorio">
+
+  <!-- ───── FORMULÁRIO ───── -->
+  <div class="coluna-form">
+
+    <div class="cartao">
+      <div class="eyebrow">Identificação</div>
+      <h2 class="serif">Cliente & evento</h2>
+      <label>Modalidade</label>
+      <select id="f-mod">
+        <option value="montado">Decoração montada (equipe monta e desmonta)</option>
+        <option value="pm">Pegue e Monte (cliente retira e devolve)</option>
+      </select>
+      <label>Nome do cliente</label>
+      <input type="text" id="f-cliente" placeholder="Ex.: Ana Paula">
+      <div class="dupla">
+        <div><label>WhatsApp do cliente</label><input type="text" id="f-zap" placeholder="(41) 9...."></div>
+        <div><label>Nº da proposta</label><input type="text" id="f-numero" placeholder="auto"></div>
+      </div>
+      <label>Tema da decoração</label>
+      <input type="text" id="f-tema" placeholder="Ex.: Safari Baby" list="temas">
+      <datalist id="temas"></datalist>
+      <div class="dupla">
+        <div><label>Aniversariante</label><input type="text" id="f-aniv" placeholder="Ex.: Helena"></div>
+        <div><label>Idade / ocasião</label><input type="text" id="f-idade" placeholder="Ex.: 2 anos"></div>
+      </div>
+      <div class="dupla">
+        <div><label>Data do evento</label><input type="date" id="f-data"></div>
+        <div><label>Local</label><input type="text" id="f-local" placeholder="Bairro / salão"></div>
+      </div>
+    </div>
+
+    <div class="cartao">
+      <div class="eyebrow">Foto opcional</div>
+      <h2 class="serif">Imagem da proposta</h2>
+      <p class="sub">Anexe uma foto da decoração, referência ou mockup. É opcional — a proposta funciona sem ela.</p>
+      <div id="zona-img">
+        <div class="dropzone" id="dropzone">
+          <span class="emoji">🖼️</span>
+          Toque para anexar uma imagem
+        </div>
+      </div>
+      <input type="file" id="inp-img" accept="image/*" hidden>
+    </div>
+
+    <div class="cartao">
+      <div class="eyebrow">Valores</div>
+      <h2 class="serif">Kit & itens</h2>
+      <p class="sub">Escolha um kit base — os itens que vêm nele já aparecem marcados. Toque para tirar, ou adicione outros.</p>
+      <div class="chips" id="chips-kits"></div>
+
+      <div id="bloco-kit"></div>
+
+      <label style="margin-top:18px">Itens extras (cobrados à parte)</label>
+      <div class="chips" id="chips-extras"></div>
+      <div id="lista-itens"></div>
+      <button class="btn secundario" id="bt-add-item">+ Adicionar item livre</button>
+
+      <label style="margin-top:16px">Entrega / frete (opcional)</label>
+      <div class="item" style="margin-top:4px">
+        <input type="text" class="desc" id="f-entrega-desc" placeholder="Entrega e retirada" value="Entrega e retirada">
+        <input type="number" class="val" id="f-entrega-val" placeholder="0" inputmode="decimal">
+      </div>
+
+      <div class="dupla" style="margin-top:14px">
+        <div><label>Sinal para reserva</label>
+          <div class="sinal-linha"><input type="number" id="f-sinal" value="50" inputmode="decimal">
+          <select id="f-sinal-tipo"><option value="valor">R$</option><option value="pct">%</option></select></div></div>
+        <div><label>Validade da proposta</label><input type="text" id="f-validade" value="7 dias" placeholder="7 dias"></div>
+      </div>
+    </div>
+
+    <div class="cartao">
+      <div class="eyebrow">Fechamento</div>
+      <h2 class="serif">Condições & observações</h2>
+      <textarea id="f-obs">Reserva garantida mediante pagamento do sinal. Valor restante pago até o dia do evento, antes da montagem. Montagem e desmontagem feitas pela nossa equipe.</textarea>
+      <div class="linha-botoes">
+        <button class="btn secundario" id="bt-salvar-modelo">💾 Salvar modelo</button>
+        <button class="btn secundario" id="bt-copiar">📋 Copiar p/ WhatsApp</button>
+      </div>
+      <button class="btn primario" id="bt-gerar-contrato">📑 Gerar contrato com estes dados</button>
+    </div>
+
+  </div>
+
+  <!-- ───── PREVIEW ───── -->
+  <div class="coluna-preview">
+    <div class="palco-prev">
+      <div class="fmt" id="fmt">
+        <button data-fmt="retrato" class="sel">📄 Retrato (A4)</button>
+        <button data-fmt="quadrado">⬛ Quadrado</button>
+        <button data-fmt="stories">📱 Stories</button>
+      </div>
+      <div id="wrap-svg"></div>
+      <div class="barra-prev">
+        <button class="btn primario" id="bt-png">⬇️ Baixar PNG</button>
+        <button class="btn secundario" id="bt-pdf">📄 Baixar PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- modal modelos -->
+<div class="veu" id="veu-modelos">
+  <div class="modal">
+    <h3 class="serif">Modelos salvos</h3>
+    <div id="lista-modelos"></div>
+    <p class="sub" style="margin-top:10px">Os modelos ficam na aba <b>Modelos</b> da planilha (a foto não é guardada no modelo).</p>
+    <button class="btn secundario" id="fechar-modelos" style="margin-top:8px">Fechar</button>
+  </div>
+</div>
+
+<div id="folha-print"></div>
+<div id="aviso"></div>
+
+
+</section>
+
+<section class="aba" id="aba-contrato">
+
+<div class="app">
+
+  <!-- ============ PAINEL DE PREENCHIMENTO ============ -->
+  <aside class="painel">
+    <div class="painel-header">
+      <h1>Gerador de Contrato</h1>
+      <p>GM CelebrArt · <span id="c_sub">Decoração montada</span></p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Modalidade</div>
+      <select id="c_mod" onchange="trocarModalidade()">
+        <option value="montado">Decoração montada (equipe monta e desmonta)</option>
+        <option value="pm">Pegue e Monte (cliente retira e devolve)</option>
+      </select>
+      <p class="dica" style="text-align:left;margin:6px 0 0">Muda as cláusulas, as datas e os textos do contrato e do checklist.</p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Dados do Cliente</div>
+      <label>Nome completo</label>
+      <input id="c_nome" placeholder="Ex: Debora Lozano Garcia">
+      <label>Endereço</label>
+      <input id="c_end" placeholder="Rua / Avenida">
+      <div class="lin2">
+        <div><label>Número</label><input id="c_num" placeholder="128"></div>
+        <div><label>Bairro</label><input id="c_bairro" placeholder="Centro"></div>
+      </div>
+      <div class="lin2">
+        <div><label>CPF / CNPJ</label><input id="c_cpf" placeholder="000.000.000-00"></div>
+        <div><label>Telefone / Contato</label><input id="c_tel" placeholder="(41) 99999-9999"></div>
+      </div>
+      <div class="lin2">
+        <div><label>Tipo de evento</label><input id="c_tipo" placeholder="Chá de bebê"></div>
+        <div><label>Tema</label><input id="c_tema" placeholder="Safari Baby"></div>
+      </div>
+      <label>Data do evento</label>
+      <input id="c_data" type="date">
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Tema & Kit (do catálogo)</div>
+      <div class="lin2">
+        <div>
+          <label>Tema</label>
+          <select id="sel-tema" onchange="preencherCatalogo()"></select>
+        </div>
+        <div>
+          <label>Kit</label>
+          <select id="sel-kit" onchange="preencherCatalogo()"></select>
+        </div>
+      </div>
+      <p class="dica" id="kit-info" style="text-align:left;margin:8px 0 0">Selecione tema e kit para preencher os itens e o valor automaticamente. Depois você pode editar à vontade.</p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Itens do Kit</div>
+      <div id="itens-lista"></div>
+      <button class="btn-add" onclick="addItem()">+ adicionar item</button>
+      <button class="btn-add" onclick="abrirExtras()" style="margin-top:6px;border-style:solid;background:var(--rosa-bg)">★ item extra do catálogo</button>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Período de Locação</div>
+      <label id="lbl_ini">Montagem</label>
+      <div class="lin2">
+        <input id="p_entrega_data" type="date">
+        <input id="p_entrega_compl" placeholder="às 09:30hrs no Clube Bosch">
+      </div>
+      <label style="margin-top:10px" id="lbl_fim">Desmontagem</label>
+      <div class="lin2">
+        <input id="p_devolucao_data" type="date">
+        <input id="p_devolucao_compl" placeholder="às 20hrs no Clube Bosch">
+      </div>
+      <p class="dica" style="text-align:left;margin-top:6px">Escolha a data no calendário (ou digite) e complemente com hora/local ao lado.</p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Valores</div>
+      <div class="lin3">
+        <div><label id="lbl_vkit">Decoração</label><input id="v_kit" type="number" value="0" oninput="calc()"></div>
+        <div><label>Item extra</label><input id="v_extra" type="number" value="0" oninput="calc()"></div>
+        <div><label id="lbl_vent">Montagem/frete</label><input id="v_entrega" type="number" value="0" oninput="calc()"></div>
+      </div>
+      <label>Sinal para reserva (abatido do total)</label>
+      <div class="lin2" style="grid-template-columns:1fr 70px">
+        <input id="v_sinal" type="number" value="50" oninput="render()">
+        <select id="v_sinal_tipo" onchange="render()"><option value="valor">R$</option><option value="pct">%</option></select>
+      </div>
+      <p class="dica" id="sinal-info" style="text-align:left;margin:6px 0 0"></p>
+      <div class="total-box"><span>TOTAL</span><span id="total-disp">R$ 0,00</span></div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Data do Contrato</div>
+      <label>Selecionar no calendário</label>
+      <input id="d_data" type="date" onchange="dataContratoPicker()">
+      <div class="lin3" style="margin-top:8px">
+        <div><label>Dia</label><input id="d_dia" placeholder="16"></div>
+        <div><label>Mês</label><input id="d_mes" placeholder="maio"></div>
+        <div><label>Ano</label><input id="d_ano"></div>
+      </div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Checklist de Conferência</div>
+      <div class="lin2">
+        <div><label>Forma de pagamento</label><input id="chk_pgto" value="Pix"></div>
+        <div><label>Foto da montagem</label><input type="file" id="chk_foto" accept="image/*" onchange="carregarFoto(event)" style="font-size:.72rem;padding:6px"></div>
+      </div>
+      <label>Observações</label>
+      <textarea id="chk_obs" placeholder="Ex: Desconto de R$10,00 na entrega/retirada do Kit."></textarea>
+      <div class="grupo-sub">Quantidade de cada item</div>
+      <p class="dica" style="text-align:left;margin:0 0 6px">Selecione o kit acima para preencher as quantidades padrão. Ajuste conforme o evento. As colunas de marcação saem em branco para preencher à mão.</p>
+      <div id="chk_qtd_lista"></div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Logo (opcional)</div>
+      <p class="dica" style="text-align:left;margin-bottom:6px">Para trocar a logo do contrato, suba o PNG transparente. Ela fica salva no Drive (pasta Imagens) e vale para os dois celulares. ↺ volta para a padrão.</p>
+      <div class="logo-upload">
+        <input type="file" id="logo-file" accept="image/*" onchange="carregarLogo(event)">
+        <button class="btn-x" title="Remover logo enviada" onclick="removerLogo()">↺</button>
+      </div>
+    </div>
+
+    <div class="acoes">
+      <button class="btn-pdf" onclick="gerarPDF('contrato')">⬇ PDF do Contrato</button>
+      <button class="btn-pdf" onclick="gerarPDF('checklist')" style="background:linear-gradient(135deg,#2b3a67,#46598f);box-shadow:0 6px 16px rgba(43,58,103,.3)">⬇ PDF do Checklist</button>
+      <button class="btn-sec" onclick="limparTudo()">Limpar formulário</button>
+      <p class="dica">Na janela de impressão escolha <b>"Salvar como PDF"</b> e deixe as margens em <b>"Padrão"</b> ou <b>"Nenhuma"</b>.</p>
+    </div>
+  </aside>
+
+  <!-- ============ PREVIEW DO CONTRATO ============ -->
+  <main>
+    <p class="mob-hint">↓ Prévia do contrato. Para gerar o PDF, use os botões no fim do formulário.</p>
+    <div class="preview-wrap">
+
+      <!-- PÁGINA 1 -->
+      <section class="pagina">
+        <div class="ct-logo" id="logo-1"></div>
+        <div class="ct-titulo"><h2>CONTRATO DE LOCAÇÃO</h2><h3><span class="so-pm">PEGUE E MONTE</span><span class="so-mon">DECORAÇÃO COM MONTAGEM</span></h3></div>
+
+        <div class="ct-parte-tit">C O N T R A T A N T E :</div>
+        <div class="ct-dados">
+          <div class="full">Nome: <b id="o_nome">—</b></div>
+          <div>Endereço: <b id="o_end">—</b></div>
+          <div>Numero: <b id="o_num">—</b></div>
+          <div>CPF/CNPJ: <b id="o_cpf">—</b></div>
+          <div>Telefone: <b id="o_tel">—</b></div>
+          <div>Tipo de Evento: <b id="o_tipo">—</b></div>
+          <div>Tema: <b id="o_tema">—</b></div>
+          <div class="full">Data do Evento: <b id="o_data">—</b></div>
+        </div>
+
+        <div class="ct-parte-tit" style="margin-top:14px">C O N T R A T A D O :</div>
+        <div class="ct-dados">
+          <div class="full">Nome: <b class="cfg-empresa">GM Celebrart</b></div>
+          <div>Endereço: <b class="cfg-endereco"></b></div>
+          <div>Numero: <b class="cfg-numero"></b></div>
+          <div>Celular: <b class="cfg-contato1_tel"></b></div>
+          <div>Celular: <b class="cfg-contato2_tel"></b></div>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">1 OBJETO DO CONTRATO</div><div class="ct-sec-line"></div>
+          <p class="ct-intro so-pm">Locação do Kit "Pegue e Monte" no tema escolhido, contendo:</p>
+          <p class="ct-intro so-mon">Locação de decoração no tema escolhido, com montagem e desmontagem pela contratada, contendo:</p>
+          <ul id="o_itens"></ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">2 OBRIGAÇÕES DO CONTRATADO</div><div class="ct-sec-line"></div>
+          <ul>
+            <li>Entregar os itens limpos e em bom estado.</li>
+            <li class="so-pm">Disponibilizar para retirada ou realizar entrega/retirada conforme combinado.</li>
+            <li class="so-mon">Realizar a montagem no local do evento, na data e horário combinados.</li>
+            <li class="so-mon">Realizar a desmontagem e a retirada dos itens após o evento, no horário combinado.</li>
+          </ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">3 OBRIGAÇÕES DO CONTRATANTE</div><div class="ct-sec-line"></div>
+          <ul>
+            <li>Utilizar os itens somente para o evento contratado.</li>
+            <li class="so-pm">Manter os itens em bom estado e devolvê-los na data/hora combinada.</li>
+            <li class="so-pm">Retirar e devolver no endereço combinado (não permitido via Uber).</li>
+            <li class="so-pm">Estar presente no momento da entrega/retirada.</li>
+            <li class="so-pm">Garantir espaço no carro para transporte (porta-malas/bancos livres).</li>
+            <li class="so-mon">Garantir acesso ao local nos horários de montagem e desmontagem (portaria, elevador e liberação do salão).</li>
+            <li class="so-mon">Informar com antecedência as regras do local, como horários permitidos e ausência de elevador ou tomada.</li>
+            <li class="so-mon">Não mover, desmontar ou retirar peças da decoração durante o evento.</li>
+            <li class="so-mon">Indicar um responsável para acompanhar o início da montagem e a desmontagem.</li>
+          </ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">4 DANOS E PERDAS</div><div class="ct-sec-line"></div>
+          <p>O contratante responde por perdas, quebras ou danos<span class="so-mon"> ocorridos entre o fim da montagem e o início da desmontagem</span>. Em caso de dano leve pagará o valor para conserto do item e em caso de dano irreparável, pagará o valor de reposição.</p>
+        </div>
+
+        <div class="ct-pagenum">- 1 -</div>
+      </section>
+
+      <!-- PÁGINA 2 -->
+      <section class="pagina">
+        <div class="ct-logo" id="logo-2"></div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">5 PERÍODO DE LOCAÇÃO</div><div class="ct-sec-line"></div>
+          <p>5.1 A locação dos itens será valida no período de:</p>
+          <ul class="ct-periodo">
+            <li><span class="so-pm">DATA DA ENTREGA/RETIRADA</span><span class="so-mon">MONTAGEM</span>: <span id="o_entrega">—</span></li>
+            <li><span class="so-pm">DATA DA RETIRADA/DEVOLUÇÃO</span><span class="so-mon">DESMONTAGEM</span>: <span id="o_devolucao">—</span></li>
+          </ul>
+          <div class="so-pm">
+            <p>5.2 A devolução deverá acontecer até a hora do dia marcado para a devolução.</p>
+            <p>5.3 Em caso de o contratante não devolver os itens no prazo estabelecido, será cobrada uma multa diária de <span class="cfg-multa">R$20,00</span> por dia atrasado.</p>
+            <p>5.4 Em caso de entrega e retirada será cobrado um valor referente ao trajeto de ida e volta do local do evento.</p>
+            <p>5.5 A retirada é feita no endereço da contratada. Não serão permitidas retiradas e devoluções via Uber.</p>
+            <p>5.6 O contratante deverá estar presente no dia da retirada/entrega e da devolução/retirada do kit.</p>
+            <p>5.7 Solicitamos ao contratante que esteja com porta-malas e bancos traseiros do carro livres para que possa caber o kit.</p>
+          </div>
+          <div class="so-mon">
+            <p>5.2 A montagem e a desmontagem serão feitas pela equipe da contratada, nos horários acima.</p>
+            <p>5.3 Caso o local não esteja liberado no horário combinado, poderá ser cobrada taxa de espera ou de novo deslocamento.</p>
+            <p>5.4 O valor de montagem, desmontagem e deslocamento está descrito no item 6.</p>
+            <p>5.5 O contratante, ou o responsável indicado, deverá estar presente no início da montagem e na desmontagem para conferência dos itens.</p>
+          </div>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">6 VALOR E FORMA DE PAGAMENTO</div><div class="ct-sec-line"></div>
+          <ul>
+            <li><span class="so-pm">Kit básico</span><span class="so-mon">Decoração</span>: <span id="o_kit">R$140,00</span></li>
+            <li>Item extra: <span id="o_extra">R$0,00</span></li>
+            <li><span class="so-pm">Entrega/retirada</span><span class="so-mon">Montagem, entrega e retirada</span>: <span id="o_ent_v">R$0,00</span></li>
+            <li>Total: <b id="o_total">R$140,00</b></li>
+          </ul>
+          <p style="margin-top:6px">Condições:</p>
+          <ul>
+            <li>Sinal de <span id="o_sinal">R$50,00</span> para reserva (abatido do total).</li>
+            <li>Valor restante de <span id="o_rest">R$0,00</span>, pago <span class="so-pm">na retirada do kit.</span><span class="so-mon">até o dia do evento, antes do início da montagem.</span></li>
+            <li>Formas: Pix, débito, crédito (1x sem juros, parcelado com juros da maquininha).</li>
+          </ul>
+          <p style="margin-top:6px">Multas ou taxas extras:</p>
+          <ul>
+            <li class="so-pm"><span class="cfg-multa">R$20,00</span> por dia de atraso na devolução.</li>
+            <li class="so-pm">Taxa extra em caso de entrega/retirada fora do combinado.</li>
+            <li class="so-mon">Taxa extra caso a montagem ou a desmontagem não possa ser feita no horário combinado.</li>
+          </ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">7 CANCELAMENTO</div><div class="ct-sec-line"></div>
+          <p>Cancelamento até 10 dias antes: devolução de 50% do valor pago. Após esse prazo, não há reembolso.</p>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">8 DISPOSIÇÕES GERAIS</div><div class="ct-sec-line"></div>
+          <ul>
+            <li>Não é permitido alterar ou sublocar os itens.</li>
+            <li>A contratada não se responsabiliza por imprevistos externos (clima, falhas inesperadas etc.).</li>
+          </ul>
+          <p class="ct-cidade"><span class="cfg-cidade">Curitiba</span>, <span id="o_dia">___</span> de <span id="o_mes">_______</span> de <span id="o_ano">2026</span>.</p>
+        </div>
+
+        <div class="ct-assinaturas">
+          <div class="ass"><div class="linha-ass"><b id="o_ass">_______________</b><br>CONTRATANTE</div></div>
+          <div class="ass"><div class="linha-ass"><b class="cfg-empresa">GM Celebrart</b><br>CONTRATADO</div></div>
+        </div>
+
+        <div class="ct-pagenum">- 2 -</div>
+      </section>
+
+      <!-- PÁGINA CHECKLIST -->
+      <section class="pagina pagina-checklist">
+        <div class="chk-header">
+          <div class="chk-logo" id="logo-chk"></div>
+          <div class="chk-dados">
+            <div class="chk-nome" id="ck_nome">—</div>
+            <div class="chk-linha"><span><span class="lbl">Endereço da festa:</span> <b id="ck_end">—</b></span><span><span class="lbl">Nº</span> <b id="ck_num">—</b></span></div>
+            <div class="chk-linha"><span><span class="lbl">Bairro:</span> <b id="ck_bairro">—</b></span><span><span class="lbl">Contato:</span> <b id="ck_tel">—</b></span></div>
+            <div class="chk-linha"><span><span class="lbl"><span class="so-pm">Data da retirada</span><span class="so-mon">Montagem</span>:</span> <b id="ck_retirada">—</b></span><span><span class="lbl"><span class="so-pm">Data da devolução</span><span class="so-mon">Desmontagem</span>:</span> <b id="ck_devol">—</b></span></div>
+          </div>
+        </div>
+
+        <div class="chk-titulo" id="ck_titulo">—</div>
+
+        <div class="chk-valores">
+          <div><span class="lbl"><span class="so-pm">Valor do Kit</span><span class="so-mon">Valor da decoração</span>:</span> <b id="ck_vkit">R$0,00</b></div>
+          <div><span class="lbl">Valor restante a ser pago:</span> <b id="ck_rest">R$0,00</b></div>
+          <div><span class="lbl"><span class="so-pm">Valor da entrega</span><span class="so-mon">Montagem/frete</span>:</span> <b id="ck_vent">R$0,00</b></div>
+          <div><span class="lbl">Forma de pagamento:</span> <b id="ck_pgto">Pix</b></div>
+          <div><span class="lbl">Valor do sinal:</span> <b id="ck_sinal">R$0,00</b></div>
+        </div>
+
+        <div class="chk-obs-row">
+          <div class="chk-foto" id="ck_foto">foto da montagem</div>
+          <div class="chk-obs"><span class="lbl">Observações:</span><br><span id="ck_obs"></span></div>
+        </div>
+
+        <table class="chk-table">
+          <thead>
+            <tr>
+              <th>Itens disponíveis</th><th class="c">Quant.</th>
+              <th class="c">Item extra</th><th class="c">Conferido</th><th class="c">Ida</th><th class="c">Volta</th>
+            </tr>
+          </thead>
+          <tbody id="ck_tbody"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL ITENS EXTRAS -->
+<div class="modal-bg" id="modal-extras" onclick="if(event.target===this)fecharExtras()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Itens Extras</h3>
+      <p>Marque os itens e a quantidade — são somados em "Item extra".</p>
+    </div>
+    <div class="modal-body" id="extras-body"></div>
+    <div class="modal-foot">
+      <button class="mf-cancel" onclick="fecharExtras()">Cancelar</button>
+      <button class="mf-add" onclick="confirmarExtras()">Adicionar selecionados</button>
+    </div>
+  </div>
+</div>
+
+
+</section>
+
+<?!= include('JsComum'); ?>
+<?!= include('JsOrcamento'); ?>
+<?!= include('JsProposta'); ?>
+<?!= include('JsContrato'); ?>
+<?!= include('JsApp'); ?>
+</body>
+</html>

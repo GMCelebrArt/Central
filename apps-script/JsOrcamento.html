@@ -1,0 +1,240 @@
+<script>
+/* ═══ ABA 1 · ORÇAMENTO ═══
+   Acervo vem da aba "Acervo" da planilha. Editar/criar/remover grava direto lá. */
+function initOrcamento(B) {
+  const ROOT = document.getElementById('aba-orcamento');
+  const $o = id => document.getElementById(id);
+
+  function avisoOrc(msg, tipo) {
+    const el = $o('orc-aviso'); if (!el) return;
+    if (!msg) { el.className = 'orc-aviso'; el.textContent = ''; return; }
+    el.className = 'orc-aviso on ' + (tipo || 'ok'); el.textContent = msg;
+  }
+
+  /* categorias — as marcadas "oculta" entram no preço mas NÃO aparecem na descrição do cliente */
+  const CATS = B.cats.length ? B.cats : [{ id: 'Decoração', nome: 'Decoração' }];
+  const CAT_PADRAO = (CATS.find(c => /decora/i.test(c.id)) || CATS.find(c => !c.oculta) || CATS[0]).id;
+  const catOculta = id => { const c = CATS.find(x => x.id === id); return !!(c && c.oculta); };
+
+  let ACERVO = B.acervo.slice();
+  const acervo = () => ACERVO;
+  const itemPorNome = n => ACERVO.find(it => it.n === n);
+
+  let checked = new Set();
+  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pctEl = $o('pct');
+  const list = $o('list');
+  pctEl.value = Number(cfg('pct_padrao', 20)) || 20;
+
+  let editando = null;   // nome do item em modo de edição
+  let abertas = new Set(jparse(LSX.get('gm_cats_abertas'), []));   // preferência só deste aparelho
+  function salvarAbertas() { LSX.set('gm_cats_abertas', JSON.stringify([...abertas])); }
+
+  /* troca a lista local pela da planilha (pega também o que o outro aparelho mudou) */
+  function aplicarAcervo(lista) {
+    ACERVO = lista;
+    [...checked].forEach(n => { if (!itemPorNome(n)) checked.delete(n); });
+    build(); total();
+  }
+  function recarregar(msg) {
+    return srv('acervoListar').then(l => { aplicarAcervo(l); if (msg) avisoOrc(msg, 'ok'); })
+      .catch(e => avisoOrc('Não consegui ler a planilha: ' + e.message, 'erro'));
+  }
+  /* grava no servidor; a tela já mudou (otimista). Se falhar, avisa e recarrega a lista real. */
+  function gravar(promessa) {
+    avisoOrc('');
+    return promessa.then(aplicarAcervo).catch(e => {
+      avisoOrc('Não salvou: ' + e.message, 'erro');
+      recarregar();
+    });
+  }
+
+  function build() {
+    list.innerHTML = '';
+    const p = +pctEl.value / 100;
+    const grupos = CATS.map(c => ({ cat: c, itens: acervo().filter(it => (it.cat || CAT_PADRAO) === c.id) }))
+      .filter(g => g.itens.length);
+    const orfaos = acervo().filter(it => !CATS.some(c => c.id === (it.cat || CAT_PADRAO)));
+    if (orfaos.length) grupos.push({ cat: { id: '__outros', nome: 'Outros' }, itens: orfaos });
+
+    grupos.forEach(g => {
+      const marcados = g.itens.filter(it => checked.has(it.n)).length;
+      const editandoAqui = g.itens.some(it => it.n === editando);
+      const aberta = abertas.has(g.cat.id) || editandoAqui;
+      const cab = document.createElement('li');
+      cab.className = 'cat-cab' + (g.cat.oculta ? ' oculta' : '') + (aberta ? ' aberta' : '');
+      cab.innerHTML = `<span class="cat-seta">${aberta ? '▾' : '▸'}</span>
+        <span class="cat-nome">${escHtml(g.cat.nome)}</span>
+        ${g.cat.oculta ? '<span class="cat-tag">não aparece p/ o cliente</span>' : ''}
+        <span class="cat-cont${marcados ? ' tem' : ''}">${marcados ? marcados + '/' : ''}${g.itens.length}</span>`;
+      cab.onclick = () => {
+        if (abertas.has(g.cat.id)) abertas.delete(g.cat.id); else abertas.add(g.cat.id);
+        salvarAbertas(); build();
+      };
+      list.appendChild(cab);
+      if (aberta) g.itens.forEach(it => montarItem(it, p));
+    });
+  }
+
+  function montarItem(it, p) {
+    const li = document.createElement('li');
+
+    if (editando === it.n) {                      // ---- modo edição ----
+      li.className = 'item editando';
+      li.innerHTML = `<input type="text" class="ed-nome" value="${escHtml(it.n)}" maxlength="60">
+        <input type="number" class="ed-valor" value="${it.c}" min="0" step="0.01" inputmode="decimal">
+        <select class="ed-cat">${CATS.map(c => `<option value="${escHtml(c.id)}"${(it.cat || CAT_PADRAO) === c.id ? ' selected' : ''}>${escHtml(c.nome)}</option>`).join('')}</select>
+        <button class="ed-ok" title="Salvar">✓</button>
+        <button class="ed-cancel" title="Cancelar">✕</button>`;
+      const nEl = li.querySelector('.ed-nome'), vEl = li.querySelector('.ed-valor');
+      const fechar = () => { editando = null; build(); total(); };
+      const salvar = () => {
+        const novoNome = nEl.value.trim();
+        const novoVal = parseFloat(vEl.value);
+        let ok = true;
+        if (!novoNome || (novoNome !== it.n && itemPorNome(novoNome))) { nEl.classList.add('erro'); ok = false; setTimeout(() => nEl.classList.remove('erro'), 1200); }
+        if (!(novoVal >= 0) || !isFinite(novoVal)) { vEl.classList.add('erro'); ok = false; setTimeout(() => vEl.classList.remove('erro'), 1200); }
+        if (!ok) return;
+        const antigo = it.n;
+        const novo = { n: novoNome, c: Math.round(novoVal * 100) / 100, cat: li.querySelector('.ed-cat').value };
+        if (novoNome !== antigo && checked.has(antigo)) { checked.delete(antigo); checked.add(novoNome); }
+        Object.assign(it, novo);
+        fechar();
+        gravar(srv('acervoSalvar', antigo, novo));
+      };
+      li.onclick = ev => ev.stopPropagation();
+      li.querySelector('.ed-ok').onclick = ev => { ev.stopPropagation(); salvar(); };
+      li.querySelector('.ed-cancel').onclick = ev => { ev.stopPropagation(); fechar(); };
+      [nEl, vEl].forEach(el => el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+        if (e.key === 'Escape') { e.preventDefault(); fechar(); }
+      }));
+      list.appendChild(li);
+      setTimeout(() => nEl.focus(), 0);
+      return;
+    }
+
+    li.className = 'item' + (checked.has(it.n) ? ' on' : '');
+    li.innerHTML = `<div class="box">${checked.has(it.n) ? '✓' : ''}</div>
+      <div class="nm">${escHtml(it.n)}</div><div class="vl">${fmt(it.c * p)}</div>
+      <button class="ed" title="Editar nome e valor">✎</button>
+      <button class="rm" title="Remover do acervo">×</button>`;
+    li.onclick = () => { checked.has(it.n) ? checked.delete(it.n) : checked.add(it.n); build(); total(); };
+    li.querySelector('.ed').onclick = ev => { ev.stopPropagation(); editando = it.n; abertas.add(it.cat || CAT_PADRAO); salvarAbertas(); build(); };
+    li.querySelector('.rm').onclick = ev => {
+      ev.stopPropagation();
+      if (!confirm('Remover "' + it.n + '" do acervo (vale para os dois celulares)?')) return;
+      ACERVO = ACERVO.filter(x => x.n !== it.n);
+      checked.delete(it.n);
+      build(); total();
+      gravar(srv('acervoRemover', it.n));
+    };
+    list.appendChild(li);
+  }
+
+  function somaServicos() {
+    return {
+      ad: +$o('adesivo').value || 0, ar: +$o('arco').value || 0,
+      mo: +$o('montagem').value || 0, fr: +$o('frete').value || 0
+    };
+  }
+  function total() {
+    const p = +pctEl.value / 100;
+    let t = 0; checked.forEach(n => { const it = itemPorNome(n); if (it) t += it.c * p; });
+    const s = somaServicos();
+    t += s.ad + s.ar + s.mo + s.fr;
+    $o('totalVal').textContent = fmt(Math.round(t * 100) / 100);
+  }
+
+  $o('bt-limpar').onclick = () => { checked.clear(); build(); total(); };
+
+  // adicionar item novo ao acervo
+  $o('novo-add').onclick = () => {
+    const nEl = $o('novo-nome'), vEl = $o('novo-valor');
+    const nome = nEl.value.trim();
+    const val = parseFloat(vEl.value);
+    let ok = true;
+    if (!nome || itemPorNome(nome)) { nEl.classList.add('erro'); ok = false; setTimeout(() => nEl.classList.remove('erro'), 1200); }
+    if (!(val > 0)) { vEl.classList.add('erro'); ok = false; setTimeout(() => vEl.classList.remove('erro'), 1200); }
+    if (!ok) return;
+    const catNova = $o('novo-cat').value || CAT_PADRAO;
+    const novo = { n: nome, c: Math.round(val * 100) / 100, cat: catNova };
+    ACERVO.push(novo);
+    abertas.add(catNova); salvarAbertas();
+    checked.add(nome);
+    nEl.value = ''; vEl.value = '';
+    build(); total();
+    gravar(srv('acervoSalvar', '', novo));
+  };
+  $o('novo-valor').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $o('novo-add').onclick(); } });
+  $o('novo-nome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $o('novo-valor').focus(); } });
+  $o('novo-nome').maxLength = 60;
+  $o('novo-cat').innerHTML = CATS.map(c => `<option value="${escHtml(c.id)}"${c.id === CAT_PADRAO ? ' selected' : ''}>${escHtml(c.nome)}</option>`).join('');
+
+  $o('bt-recarregar-acervo').onclick = () => recarregar('Lista atualizada com a planilha ✓');
+  $o('link-planilha').href = B.planilhaUrl;
+
+  ['pct', 'adesivo', 'arco', 'montagem', 'frete'].forEach(id => $o(id).addEventListener('input', () => { build(); total(); }));
+
+  $o('copy').onclick = () => {
+    const p = +pctEl.value / 100; const linhas = []; let t = 0;
+    acervo().forEach(it => {
+      if (!checked.has(it.n)) return;
+      t += it.c * p;                                                    // materiais entram no preço…
+      if (!catOculta(it.cat || CAT_PADRAO)) linhas.push('• ' + it.n);   // …mas não na descrição
+    });
+    const s = somaServicos();
+    if (s.ad) linhas.push('• Adesivo personalizado');
+    if (s.ar) linhas.push('• Arco de balões');
+    const extra = [];
+    if (s.mo || s.fr) extra.push(modalidade === 'pm'
+      ? 'Inclui entrega e retirada.'
+      : 'Inclui montagem no local e retirada após a festa.');
+    t += s.ad + s.ar + s.mo + s.fr;
+    const txt = `✦ GM CelebrArt ✦\n\nDecoração inclusa:\n${linhas.join('\n')}\n\n${extra.join(' ')}\nValor: ${fmt(Math.round(t * 100) / 100)}`
+      .replace(/\n{3,}/g, '\n\n').trim();
+    copiarTexto(txt, 'Copiado! É só colar no WhatsApp.');
+  };
+
+  let modalidade = 'montado';
+  (function () {
+    const box = $o('orc-mod');
+    const hint = $o('orc-mod-hint');
+    const set = m => {
+      modalidade = m;
+      box.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mod === m));
+      hint.textContent = m === 'pm'
+        ? 'Pegue e Monte: o cliente retira e devolve. Montagem e frete só se combinado.'
+        : 'Montagem, entrega e retirada feitas pela equipe.';
+    };
+    box.querySelectorAll('button').forEach(b => b.onclick = () => set(b.dataset.mod));
+    set('montado');
+  })();
+
+  function dados() {
+    const p = +pctEl.value / 100;
+    let aluguel = 0; const nomes = [];
+    acervo().forEach(it => {
+      if (!checked.has(it.n)) return;
+      aluguel += it.c * p;
+      if (!catOculta(it.cat || CAT_PADRAO)) nomes.push(it.n);
+    });
+    const s = somaServicos();
+    const r2 = x => Math.round(x * 100) / 100;
+    if (s.ar) nomes.push('Arco de balões');
+    return {
+      itens: nomes,
+      kitNome: null,
+      valorKit: r2(aluguel + s.ad + s.ar),
+      temAdesivo: s.ad > 0,
+      temArco: s.ar > 0,
+      servico: r2(s.mo + s.fr),
+      total: r2(aluguel + s.ad + s.ar + s.mo + s.fr),
+      modalidade
+    };
+  }
+  window.ORC = { dados };
+
+  build(); total();
+}
+</script>

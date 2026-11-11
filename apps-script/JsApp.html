@@ -1,0 +1,160 @@
+<script>
+/* ═══ SHELL: abas, carregamento da planilha e pontes entre as abas ═══ */
+(function () {
+  document.addEventListener('touchstart', function () {}, { passive: true });   // iOS: click confiável em li/div
+  const abas = ['orcamento', 'proposta', 'contrato'];
+  const secs = {}, tabs = {};
+  abas.forEach(a => {
+    secs[a] = document.getElementById('aba-' + a);
+    tabs[a] = document.querySelector('.shell-tab[data-aba="' + a + '"]');
+  });
+  function ir(a) {
+    abas.forEach(x => { secs[x].classList.toggle('ativa', x === a); tabs[x].classList.toggle('sel', x === a); });
+    window.scrollTo({ top: 0 });
+    window.dispatchEvent(new Event('resize'));
+  }
+  document.querySelectorAll('.shell-tab').forEach(t => t.onclick = () => ir(t.dataset.aba));
+
+  /* Orçamento → Proposta */
+  document.getElementById('orc-para-proposta').onclick = () => {
+    window.PROP.receberOrcamento(window.ORC.dados());
+    ir('proposta');
+  };
+
+  /* Proposta → Contrato */
+  document.getElementById('bt-gerar-contrato').onclick = () => {
+    const d = window.PROP.dadosParaContrato();
+    const g = id => document.getElementById(id);
+    const B = APP.boot;
+    g('c_nome').value = titleCasePT(d.cliente || '');
+    g('c_tel').value = maskTel(d.zap || '');
+    g('c_tema').value = titleCasePT(d.tema || '');
+    if (d.data) g('c_data').value = d.data;
+    const montado = d.modalidade !== 'pm';
+    g('c_mod').value = montado ? 'montado' : 'pm';
+
+    // datas e local do período: só preenche o que estiver vazio
+    if (d.data) {
+      if (!g('p_entrega_data').value) g('p_entrega_data').value = d.data;
+      if (montado && !g('p_devolucao_data').value) g('p_devolucao_data').value = d.data;
+    }
+    if (d.local && montado) {
+      if (!g('p_entrega_compl').value) g('p_entrega_compl').value = 'no(a) ' + d.local;
+      if (!g('p_devolucao_compl').value) g('p_devolucao_compl').value = 'no(a) ' + d.local;
+    }
+
+    // kit do catálogo (Bronze/Prata/Ouro…): aceita "Ouro" ou "Kit Ouro"
+    const nomeKit = String(d.kitNome || '').trim().toLowerCase().replace(/^kit\s+/, '');
+    const kitKey = Object.keys(CATALOGO).find(k => k.toLowerCase() === nomeKit) || '';
+    g('sel-kit').value = kitKey;
+    const temaOpt = [...g('sel-tema').options].find(o => o.value && o.value.toLowerCase() === String(d.tema || '').trim().toLowerCase());
+    g('sel-tema').value = temaOpt ? temaOpt.value : '';
+
+    initChecklistQtd();
+    if (kitKey) {
+      setChecklistQtd(kitKey);
+      // peças que foram tiradas do kit na proposta saem também do checklist
+      const incl = d.kitInclui.map(x => x.toLowerCase());
+      (KIT_PERTENCE[kitKey] || []).forEach(i => {
+        const nomeContrato = (B.itensKit[i] && B.itensKit[i].contrato || '').toLowerCase();
+        if (nomeContrato && incl.indexOf(nomeContrato) < 0 && g('ckq_' + i)) g('ckq_' + i).value = 0;
+      });
+    }
+
+    const temaTxt = g('c_tema').value;
+    const doCatalogo = kitKey ? CATALOGO[kitKey].itens.map(x => x.toLowerCase()) : [];
+    g('itens-lista').innerHTML = '';
+    d.kitInclui.forEach(n => {
+      const ehDoKit = doCatalogo.indexOf(n.toLowerCase()) >= 0;
+      const txt = (/^capas no tema$/i.test(n) && temaTxt) ? 'Capas no tema - ' + temaTxt : n;
+      addItem(txt, false, ehDoKit);       // faz parte da decoração: não é extra
+    });
+
+    // extras cobrados à parte: os ligados a uma peça do checklist somam na quantidade (antes sumiam)
+    (d.extrasDet || []).forEach(x => {
+      const i = idxChecklist(x.chk);
+      if (i >= 0 && g('ckq_' + i)) {
+        const m = x.desc.match(/^(\d+)\s*x\s+/i);
+        g('ckq_' + i).value = (Number(g('ckq_' + i).value) || 0) + (m ? Number(m[1]) : 1);
+        g('cke_' + i).checked = true;
+        addItem(x.desc, true, false, x.chk);
+      } else addItem(x.desc, true);
+    });
+    if (!d.kitInclui.length && !(d.extrasDet || []).length) addItem();
+
+    g('v_kit').value = d.valKit || 0;
+    g('v_extra').value = d.valExtras || 0;
+    g('v_entrega').value = d.valEntrega || 0;
+    g('v_sinal').value = d.sinal || 0;
+    g('v_sinal_tipo').value = d.sinalTipo === 'pct' ? 'pct' : 'valor';
+    g('kit-info').textContent = kitKey
+      ? 'Kit ' + kitKey + ' veio da proposta. Quantidades do checklist preenchidas.'
+      : 'Itens vieram da proposta.';
+    trocarModalidade();
+    calc();
+    ir('contrato');
+  };
+
+  /* ── carregamento ── */
+  const tela = document.getElementById('carregando');
+  const msg = document.getElementById('carregando-msg');
+  function erro(e) {
+    tela.classList.add('erro');
+    msg.innerHTML = 'Não consegui carregar: ' + escHtml(e && e.message || e)
+      + '<br><br><button onclick="location.reload()" style="padding:10px 18px;border:none;border-radius:10px;background:#c9607c;color:#fff;font:500 14px Jost,sans-serif">Tentar de novo</button>';
+    console.error(e);
+  }
+  function carregarImagens() {
+    srv('getImagens').then(img => {
+      APP.img = img;
+      if (img.logo) window.PROP.setLogo(img.logo);
+      if (img.logoContrato) setLogoContratoUrl(img.logoContrato);
+      render();     // foto da montagem no checklist
+    }).catch(e => { console.error(e); toast('Imagens não carregaram: ' + e.message, 5000); });
+  }
+
+  /* ── PIN: guardado só neste aparelho ── */
+  const pinBox = document.getElementById('pin-box');
+  function pedirPin(aviso) {
+    tela.classList.remove('erro');
+    document.querySelector('#carregando .giro').style.display = 'none';
+    msg.textContent = aviso || 'Digite o PIN de acesso';
+    pinBox.style.display = 'flex';
+    document.getElementById('pin-nome').value = LSX.get('gm_quem') || '';
+    document.getElementById('pin-cod').focus();
+  }
+  function entrar() {
+    APP.pin = document.getElementById('pin-cod').value.trim();
+    APP.quem = document.getElementById('pin-nome').value.trim();
+    if (!APP.pin) return;
+    pinBox.style.display = 'none';
+    document.querySelector('#carregando .giro').style.display = '';
+    msg.textContent = 'Carregando dados da planilha…';
+    carregar();
+  }
+  document.getElementById('pin-ok').onclick = entrar;
+  document.getElementById('pin-cod').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+
+  function carregar() {
+    srv('getBoot').then(B => {
+      LSX.set('gm_pin', APP.pin); LSX.set('gm_quem', APP.quem);
+      APP.boot = B;
+      initOrcamento(B);
+      initProposta(B);
+      initContrato(B);
+      tela.classList.add('some');
+      ir('orcamento');
+      carregarImagens();
+    }).catch(e => {
+      const m = String(e && e.message || e);
+      if (m.indexOf('PIN_INVALIDO') >= 0) { LSX.del('gm_pin'); pedirPin('PIN incorreto. Tente de novo.'); }
+      else if (m.indexOf('PIN_BLOQUEADO') >= 0) pedirPin('Muitas tentativas. Aguarde 10 minutos.');
+      else erro(e);
+    });
+  }
+
+  const salvo = LSX.get('gm_pin');
+  if (salvo) { APP.pin = salvo; APP.quem = LSX.get('gm_quem') || ''; carregar(); }
+  else pedirPin();
+})();
+</script>

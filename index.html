@@ -1,0 +1,2822 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GM CelebrArt — Central</title>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══ SHELL ═══ */
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#faf6f2;min-height:100vh}
+.shell-topo{background:#fff;border-bottom:1px solid #ece2d8;padding:14px 16px 0;text-align:center}
+.shell-marca .serifa{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:#c9607c;display:block;line-height:1.1}
+.shell-marca .sub{font-family:'Jost',sans-serif;font-size:10px;letter-spacing:.35em;text-transform:uppercase;color:#b09a9e}
+.shell-tabs{display:flex;gap:4px;max-width:560px;margin:12px auto 0}
+.shell-tab{flex:1;padding:12px 4px 13px;border:none;background:none;font-family:'Jost',sans-serif;font-size:13.5px;
+  font-weight:500;color:#9a8388;cursor:pointer;border-bottom:2.5px solid transparent}
+.shell-tab.sel{color:#c9607c;border-bottom-color:#c9607c}
+.aba{display:none}
+.aba.ativa{display:block}
+@media print{
+  body.modo-contrato .shell-topo, body.modo-checklist .shell-topo,
+  body.modo-contrato #aba-orcamento, body.modo-checklist #aba-orcamento,
+  body.modo-contrato #aba-proposta, body.modo-checklist #aba-proposta{display:none!important}
+  body.modo-contrato #aba-contrato, body.modo-checklist #aba-contrato{display:block!important}
+}
+
+/* ═══ ABA ORÇAMENTO ═══ */
+
+#aba-orcamento{--rose:#c97b8a;--rose-deep:#6b2737;--gold:#c8a04e;--ink:#2a1f22;
+  --paper:#fff8f4;--line:#ecdadd;
+  font-family:'Jost',system-ui,sans-serif;color:var(--ink);
+  padding:18px 14px 80px;max-width:560px;margin:0 auto}
+#aba-orcamento .card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;
+  box-shadow:0 12px 30px -20px rgba(107,39,55,.4)}
+#aba-orcamento .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:500;margin-bottom:10px;display:block}
+#aba-orcamento .kits{display:flex;gap:8px;flex-wrap:wrap}
+#aba-orcamento .kit{flex:1 1 0;min-width:70px;padding:13px 6px;border:1.5px solid var(--line);border-radius:12px;background:#fff;
+  font-family:'Jost';font-weight:500;font-size:14px;color:var(--rose-deep);cursor:pointer;transition:.15s}
+#aba-orcamento .kit:active{transform:scale(.97)}
+#aba-orcamento .kit.clear{color:#9a7b80}
+#aba-orcamento ul{list-style:none}
+#aba-orcamento li.item{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #f3e8ea;cursor:pointer}
+#aba-orcamento li.item:last-child{border-bottom:none}
+#aba-orcamento .box{width:24px;height:24px;border:2px solid var(--line);border-radius:7px;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;font-size:15px;color:#fff;transition:.12s}
+#aba-orcamento li.on .box{background:var(--rose);border-color:var(--rose)}
+#aba-orcamento .nm{flex:1;font-size:15px}
+#aba-orcamento li.on .nm{font-weight:500}
+#aba-orcamento .vl{font-size:14px;color:#8a6b70;font-variant-numeric:tabular-nums}
+#aba-orcamento li.on .vl{color:var(--rose-deep);font-weight:500}
+#aba-orcamento .row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+#aba-orcamento .row:last-child{margin-bottom:0}
+#aba-orcamento .row span{font-size:14px}
+#aba-orcamento .row input{width:120px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-family:'Jost';
+  font-size:15px;text-align:right;background:#fff}
+#aba-orcamento .row input:focus{outline:none;border-color:var(--rose)}
+#aba-orcamento .pct{display:flex;align-items:center;gap:8px}
+#aba-orcamento .pct input{width:64px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-family:'Jost';font-size:15px;text-align:right;background:#fff}
+#aba-orcamento .ponte{width:100%;padding:13px;border:1.5px dashed var(--rose);border-radius:12px;background:#fff5f6;
+  color:var(--rose-deep);font-family:'Jost';font-size:14px;font-weight:500;cursor:pointer;margin-bottom:12px}
+#aba-orcamento .ponte:active{transform:scale(.99)}
+#aba-orcamento .total{position:sticky;bottom:14px;background:linear-gradient(135deg,var(--rose-deep),var(--rose));color:#fff;
+  border-radius:16px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 16px 34px -14px rgba(107,39,55,.7);margin-top:4px}
+#aba-orcamento .total .t1{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+#aba-orcamento .total .t2{font-family:'Cormorant Garamond',serif;font-size:38px;line-height:1;font-variant-numeric:tabular-nums}
+#aba-orcamento .total button{background:rgba(255,255,255,.18);border:none;color:#fff;border-radius:10px;padding:10px 14px;
+  font-family:'Jost';font-size:13px;cursor:pointer;font-weight:500}
+#aba-orcamento .total button:active{background:rgba(255,255,255,.3)}
+#aba-orcamento .save{font-size:12px;color:var(--rose);text-align:center;margin-top:10px;cursor:pointer;text-decoration:underline}
+#aba-orcamento .saverow{display:none;gap:8px;margin-top:10px}
+#aba-orcamento .saverow.show{display:flex}
+#aba-orcamento .saverow button{flex:1;padding:10px;border:1px dashed var(--rose);background:#fff5f6;color:var(--rose-deep);
+  border-radius:9px;font-size:12px;cursor:pointer;font-family:'Jost'}
+#aba-orcamento .hint{font-size:11px;color:#a98f94;text-align:center;margin-top:8px}
+#aba-orcamento .kit.on{background:var(--rose-deep);color:#fff;border-color:var(--rose-deep)}
+#aba-orcamento .addrow{display:flex;gap:7px;margin-top:12px;border-top:1px solid #f3e8ea;padding-top:12px}
+#aba-orcamento .addrow input{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-family:'Jost';font-size:14px;background:#fff}
+#aba-orcamento .addrow input:focus{outline:none;border-color:var(--rose)}
+#aba-orcamento .addrow .an{flex:1;min-width:0}
+#aba-orcamento .addrow .av{width:86px;text-align:right}
+#aba-orcamento .addrow button{flex:0 0 42px;border:1px solid var(--rose);background:#fff5f6;color:var(--rose-deep);border-radius:9px;font-size:19px;cursor:pointer}
+#aba-orcamento .addrow input.erro{border-color:#c0392b;background:#fdf1ef}
+#aba-orcamento li.item .rm{flex:0 0 26px;width:26px;height:26px;border:none;background:#f6e9ec;color:#a05563;border-radius:7px;font-size:13px;cursor:pointer;line-height:1}
+#aba-orcamento li.item .ed{flex:0 0 26px;width:26px;height:26px;border:none;background:#eef0f7;color:#5a6b96;border-radius:7px;font-size:12px;cursor:pointer;line-height:1;margin-left:2px}
+#aba-orcamento li.item.editando{gap:6px;background:#fdf7f8;border-radius:8px;padding:8px 6px}
+#aba-orcamento li.item.editando input{border:1px solid #e6d3d8;border-radius:7px;padding:7px 8px;font:inherit;font-size:.85rem;min-width:0;background:#fff}
+#aba-orcamento li.item.editando .ed-nome{flex:1 1 auto}
+#aba-orcamento li.item.editando .ed-valor{flex:0 0 80px;width:80px}
+#aba-orcamento li.item.editando .ed-ok,#aba-orcamento li.item.editando .ed-cancel{flex:0 0 30px;width:30px;height:30px;border:none;border-radius:7px;font-size:13px;cursor:pointer;line-height:1}
+#aba-orcamento li.item.editando .ed-ok{background:#dff1e4;color:#2f7a45}
+#aba-orcamento li.item.editando .ed-cancel{background:#f6e9ec;color:#a05563}
+#aba-orcamento li.item.editando input.erro{border-color:#d9534f;background:#fdf1f1}
+#aba-orcamento li.item.editando .ed-cat{flex:1 1 100%;order:3;border:1px solid #e6d3d8;border-radius:7px;padding:7px 8px;font:inherit;font-size:.8rem;background:#fff;margin-top:6px}
+#aba-orcamento li.item.editando{flex-wrap:wrap}
+#aba-orcamento li.cat-cab{display:flex;align-items:center;gap:8px;padding:14px 4px 6px;border-bottom:none;cursor:default;list-style:none}
+#aba-orcamento li.cat-cab:first-child{padding-top:4px}
+#aba-orcamento li.cat-cab{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;border-radius:9px;transition:background .15s}
+#aba-orcamento li.cat-cab:active{background:#fbf1f3}
+#aba-orcamento li.cat-cab.aberta{background:#fdf7f8}
+#aba-orcamento li.cat-cab .cat-seta{flex:0 0 14px;font-size:.7rem;color:#c9a3ad;line-height:1}
+#aba-orcamento li.cat-cab .cat-nome{font-family:'Cormorant Garamond',serif;font-size:1.02rem;color:#c9607c;letter-spacing:.02em}
+#aba-orcamento li.cat-cab .cat-cont.tem{background:#c9607c;color:#fff;border-radius:20px;padding:1px 8px;font-size:.68rem}
+#aba-orcamento .acervo-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#aba-contrato.mod-pm .so-mon{display:none!important}#aba-contrato.mod-montado .so-pm{display:none!important}
+#aba-proposta .sinal-linha{display:flex;gap:6px}#aba-proposta .sinal-linha input{flex:1;min-width:0}#aba-proposta .sinal-linha select{flex:0 0 64px}
+#aba-orcamento .mod-toggle{display:flex;gap:6px;margin:4px 0 10px;background:#f6eef0;border-radius:11px;padding:4px}
+#aba-orcamento .mod-toggle button{flex:1;border:none;background:transparent;padding:9px 6px;border-radius:8px;font:inherit;font-size:.8rem;color:#8a6b70;cursor:pointer}
+#aba-orcamento .mod-toggle button.on{background:#fff;color:#c9607c;box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:500}
+#aba-orcamento .publicar{margin-top:14px;padding-top:12px;border-top:1px solid #f3e8ea;display:flex;flex-direction:column;gap:6px}
+#aba-orcamento #bt-recarregar-acervo{padding:11px 14px;border:none;border-radius:10px;background:#c9607c;color:#fff;font:inherit;font-size:.85rem;cursor:pointer}
+#aba-orcamento #bt-recarregar-acervo:disabled{opacity:.6}
+#aba-orcamento .orc-aviso{display:none;margin-top:10px;padding:10px 12px;border-radius:9px;font-size:.78rem;line-height:1.35}
+#aba-orcamento .orc-aviso.on{display:block}
+#aba-orcamento .orc-aviso.erro{background:#fdf1f1;border:1px solid #f0c9c9;color:#a33}
+#aba-orcamento .orc-aviso.ok{background:#eef7f0;border:1px solid #c9e6d2;color:#2f7a45}
+#aba-orcamento #bt-limpar{flex:0 0 auto;padding:6px 12px;font-size:.72rem;border:1px solid #eddfe3;background:#fff;color:#a05563;border-radius:20px;cursor:pointer}
+#aba-orcamento li.cat-cab .cat-tag{font-size:.63rem;color:#9c8a8f;background:#f6eef0;border-radius:20px;padding:2px 8px;white-space:nowrap}
+#aba-orcamento li.cat-cab .cat-cont{margin-left:auto;font-size:.7rem;color:#b09aa0}
+#aba-orcamento li.cat-cab.oculta .cat-nome{color:#7d8aa8}
+
+/* ═══ ABA PROPOSTA (escopo #aba-proposta) ═══ */
+#aba-proposta{
+  --creme:#faf6f2; --texto:#2a2a2a; --rosa:#e8a0b4; --rosa-escuro:#c9607c;
+  --azul:#90b8d0; --azul-escuro:#5080a0; --sub:#888;
+  --linha:#ece2d8; --sombra:0 8px 30px rgba(120,90,80,.10); --raio:18px;
+}#aba-proposta{margin:0; padding:0}#aba-proposta{
+  font-family:'Jost',sans-serif; color:var(--texto); background:var(--creme);
+  font-size:15px; line-height:1.5;
+}#aba-proposta .serif{font-family:'Cormorant Garamond',serif}/* topo */
+#aba-proposta .topo{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:12px;
+  padding:10px 18px; background:rgba(250,246,242,.92); backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--linha);
+}#aba-proposta .topo img{width:34px; height:34px; object-fit:contain}#aba-proposta .topo h1{font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:600; margin:0; line-height:1}#aba-proposta .topo .et{font-family:'Jost',sans-serif; font-size:10.5px; letter-spacing:2px; color:var(--rosa-escuro); text-transform:uppercase}#aba-proposta .topo .dir{margin-left:auto; display:flex; gap:8px}#aba-proposta .ic{
+  width:40px; height:40px; border-radius:12px; border:1px solid var(--linha);
+  background:#fff; font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+}#aba-proposta .ic:active{transform:scale(.94)}/* layout */
+#aba-proposta .envoltorio{max-width:1280px; margin:0 auto; padding:16px}@media (min-width:1000px){#aba-proposta .envoltorio{display:grid; grid-template-columns:minmax(0,440px) minmax(0,1fr); gap:26px; align-items:start; padding:24px}#aba-proposta .coluna-preview{position:sticky; top:74px}
+}/* cartões de formulário */
+#aba-proposta .cartao{
+  background:#fff; border:1px solid var(--linha); border-radius:var(--raio);
+  padding:16px 16px 18px; margin-bottom:14px; box-shadow:var(--sombra);
+}#aba-proposta .cartao h2{font-family:'Cormorant Garamond',serif; font-weight:600; font-size:20px; margin:0 0 2px}#aba-proposta .cartao .eyebrow{font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--rosa-escuro); margin-bottom:6px}#aba-proposta .cartao p.sub{color:var(--sub); font-size:12.5px; margin:0 0 12px}#aba-proposta label{display:block; font-size:12px; color:var(--sub); margin:10px 0 4px; font-weight:500}#aba-proposta input[type=text], #aba-proposta input[type=number], #aba-proposta input[type=date], #aba-proposta textarea, #aba-proposta select{
+  width:100%; border:1px solid var(--linha); border-radius:11px; padding:11px 12px;
+  font-family:'Jost',sans-serif; font-size:15px; color:var(--texto); background:#fdfbf9;
+}#aba-proposta input:focus, #aba-proposta textarea:focus, #aba-proposta select:focus{outline:none; border-color:var(--rosa); background:#fff}#aba-proposta textarea{resize:vertical; min-height:74px; line-height:1.45}#aba-proposta .dupla{display:flex; gap:10px}#aba-proposta .dupla>div{flex:1}#aba-proposta .btn{
+  display:block; width:100%; border:none; border-radius:13px; padding:13px;
+  font-family:'Jost',sans-serif; font-size:15px; font-weight:500; cursor:pointer; margin-top:10px;
+}#aba-proposta .btn:active{transform:scale(.99)}#aba-proposta .primario{background:var(--rosa-escuro); color:#fff}#aba-proposta .secundario{background:#fff; color:var(--texto); border:1px solid var(--linha)}#aba-proposta .linha-botoes{display:flex; gap:8px}#aba-proposta .linha-botoes .btn{margin-top:8px}/* atalhos de kit / extras */
+#aba-proposta .chips{display:flex; flex-wrap:wrap; gap:7px; margin:4px 0 2px}#aba-proposta .chip{
+  border:1px solid var(--linha); background:#fff; border-radius:20px;
+  padding:7px 13px; font-size:12.5px; cursor:pointer; color:var(--texto); white-space:nowrap;
+}#aba-proposta .chip:active{transform:scale(.95)}#aba-proposta .chip.kit{border-color:var(--rosa); color:var(--rosa-escuro); font-weight:500}#aba-proposta .chip.kit.sel{background:var(--rosa-escuro); color:#fff; border-color:var(--rosa-escuro)}/* bloco do kit selecionado */
+#aba-proposta .kit-box{border:1px solid var(--rosa); background:#fdf6f8; border-radius:14px; padding:13px 13px 14px; margin-top:12px}#aba-proposta .kit-cab{display:flex; align-items:center; gap:9px}#aba-proposta .kit-nome{flex:1; font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:var(--rosa-escuro)}#aba-proposta .kit-nome-inp{flex:1; font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:600; color:var(--rosa-escuro); background:#fff; border:1px solid #f0d4dd; border-radius:9px; padding:6px 10px}#aba-proposta .kit-cab input{width:96px; text-align:right; background:#fff}#aba-proposta .kit-rem{flex:0 0 auto; width:34px; height:34px; border:none; background:#f3dde4; border-radius:9px; color:var(--rosa-escuro); font-size:17px; cursor:pointer}#aba-proposta .kit-sub{font-size:11.5px; color:var(--sub); margin:11px 0 7px; letter-spacing:.3px}#aba-proposta .incluso-chips{display:flex; flex-wrap:wrap; gap:6px}#aba-proposta .inc{
+  border:1px solid var(--rosa); background:#fff; color:var(--rosa-escuro);
+  border-radius:18px; padding:6px 12px 6px 26px; font-size:12.5px; cursor:pointer; position:relative;
+}#aba-proposta .inc::before{content:'✓'; position:absolute; left:10px; font-size:11px}#aba-proposta .inc.off{border-color:#dcd3ca; background:#f4efe9; color:#aaa; text-decoration:line-through; padding-left:12px}#aba-proposta .inc.off::before{content:''}#aba-proposta .add-inc{display:flex; gap:7px; margin-top:9px}#aba-proposta .add-inc input{flex:1; padding:8px 11px; font-size:13.5px}#aba-proposta .add-inc button{flex:0 0 auto; width:40px; border:1px solid var(--rosa); background:#fff; color:var(--rosa-escuro); border-radius:10px; font-size:18px; cursor:pointer}/* itens */
+#aba-proposta .item{display:flex; gap:8px; align-items:center; margin-top:8px}#aba-proposta .item input.desc{flex:1}#aba-proposta .item input.val{width:104px; text-align:right}#aba-proposta .item .rem{
+  flex:0 0 auto; width:34px; height:34px; border:none; background:#f6edea;
+  border-radius:9px; color:var(--rosa-escuro); font-size:16px; cursor:pointer;
+}#aba-proposta .subnota{font-size:11.5px; color:var(--sub); margin-top:8px}/* imagem opcional */
+#aba-proposta .dropzone{
+  border:2px dashed #d8cfc6; border-radius:14px; padding:22px; text-align:center;
+  color:var(--sub); cursor:pointer; background:#fdfbf9; transition:.15s;
+}#aba-proposta .dropzone:active{background:#f7efe9}#aba-proposta .dropzone .emoji{font-size:30px; display:block; margin-bottom:6px}#aba-proposta .previa-img{position:relative; margin-top:4px}#aba-proposta .previa-img img{width:100%; border-radius:14px; display:block; border:1px solid var(--linha)}#aba-proposta .previa-img .trocar{position:absolute; right:8px; bottom:8px; background:rgba(255,255,255,.92);
+  border:1px solid var(--linha); border-radius:10px; padding:6px 11px; font-size:12.5px; cursor:pointer}#aba-proposta .previa-img .tira{position:absolute; right:8px; top:8px; background:rgba(255,255,255,.92);
+  border:1px solid var(--linha); border-radius:50%; width:30px; height:30px; font-size:15px; cursor:pointer}#aba-proposta .ajuste-img{margin-top:12px; padding:12px; background:#fdfbf9; border:1px solid var(--linha); border-radius:12px}#aba-proposta .ajuste-cab{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}#aba-proposta .ajuste-cab span{font-size:12.5px; color:var(--rosa-escuro); font-weight:500}#aba-proposta .ajuste-cab button{border:1px solid var(--linha); background:#fff; border-radius:9px; padding:5px 10px; font-size:12px; cursor:pointer; color:var(--texto)}#aba-proposta .ajuste-img label{margin:8px 0 3px}#aba-proposta .ajuste-img label small{color:var(--sub); font-weight:400}#aba-proposta .ajuste-img input[type=range]{width:100%; accent-color:var(--rosa-escuro)}#aba-proposta .ajuste-img input[type=range]:disabled{accent-color:#d8cfc6; opacity:.5}#aba-proposta .ajuste-2col{display:flex; gap:12px}#aba-proposta .ajuste-2col>div{flex:1}/* preview */
+#aba-proposta .palco-prev{
+  background:#fff; border:1px solid var(--linha); border-radius:var(--raio);
+  box-shadow:var(--sombra); padding:12px; overflow:hidden;
+}#aba-proposta #svg-prev{width:100%; height:auto; display:block; border-radius:10px}#aba-proposta .barra-prev{display:flex; gap:8px; margin-top:12px}#aba-proposta .barra-prev .btn{margin-top:0; flex:1}#aba-proposta .fmt{display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap}#aba-proposta .fmt button{
+  flex:1; border:1px solid var(--linha); background:#fff; border-radius:10px; padding:8px;
+  font-size:12px; cursor:pointer; color:var(--sub); min-width:88px;
+}#aba-proposta .fmt button.sel{border-color:var(--rosa); background:#fdf3f6; color:var(--rosa-escuro); font-weight:500}/* véu / modais */
+#aba-proposta .veu{position:fixed; inset:0; background:rgba(40,30,28,.45); z-index:60; display:none;
+  align-items:center; justify-content:center; padding:18px}#aba-proposta .veu.aberto{display:flex}#aba-proposta .modal{background:#fff; border-radius:20px; padding:20px; width:100%; max-width:440px; max-height:86vh; overflow:auto}#aba-proposta .modal h3{font-family:'Cormorant Garamond',serif; font-size:22px; margin:0 0 12px; text-align:center}#aba-proposta .modelo-linha{display:flex; align-items:center; gap:10px; padding:11px 4px; border-bottom:1px solid var(--linha)}#aba-proposta .modelo-linha:last-child{border:none}#aba-proposta .modelo-linha .nome{flex:1; font-size:14px}#aba-proposta .modelo-linha .nome small{display:block; color:var(--sub); font-size:11.5px}#aba-proposta .modelo-linha button{border:none; background:#f6edea; border-radius:9px; padding:7px 12px; font-size:12.5px; cursor:pointer; color:var(--rosa-escuro)}/* aviso */
+#aba-proposta #aviso{position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px);
+  background:var(--texto); color:#fff; padding:11px 20px; border-radius:30px; font-size:13.5px;
+  opacity:0; pointer-events:none; transition:.25s; z-index:80}#aba-proposta #aviso.ver{opacity:1; transform:translateX(-50%) translateY(0)}/* impressão */
+#aba-proposta #folha-print{display:none}
+
+/* ═══ ABA CONTRATO (escopo #aba-contrato) ═══ */
+#aba-contrato{
+    --azul:#2b3a67;
+    --azul-bebe:#aed4e6;
+    --coral:#e89ba0;
+    --coral-forte:#d9787f;
+    --rosa-bg:#fceef0;
+    --cinza:#5a5a5a;
+    --linha:#cfcfcf;
+    --papel:#ffffff;
+  }#aba-contrato{
+    font-family:'Quicksand',sans-serif;
+    background:linear-gradient(160deg,#fdf3f5 0%,#eef4f8 100%);
+    color:var(--azul);
+    min-height:100vh;
+  }/* ---------- LAYOUT APP ---------- */
+  #aba-contrato .app{display:grid;grid-template-columns:420px 1fr;gap:0;min-height:100vh}#aba-contrato .painel{
+    background:var(--papel);
+    border-right:1px solid var(--linha);
+    padding:0 0 40px;
+    overflow-y:auto;
+    height:100vh;
+    position:sticky;
+    top:0;
+  }#aba-contrato .painel-header{
+    background:var(--rosa-bg);
+    padding:26px 28px 22px;
+    border-bottom:2px solid var(--coral);
+    position:sticky;top:0;z-index:5;
+  }#aba-contrato .painel-header h1{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.5rem;font-weight:700;letter-spacing:.5px;
+  }#aba-contrato .painel-header p{font-size:.78rem;color:var(--cinza);margin-top:3px;font-weight:500}#aba-contrato .grupo{padding:18px 28px 4px}#aba-contrato .grupo-titulo{
+    font-family:'Cormorant Garamond',serif;
+    font-size:1.05rem;font-weight:700;
+    color:var(--coral-forte);
+    border-bottom:1px dotted var(--linha);
+    padding-bottom:5px;margin-bottom:12px;
+    display:flex;align-items:center;gap:8px;
+  }#aba-contrato .grupo-titulo::before{content:"✦";color:var(--azul-bebe);font-size:.8rem}#aba-contrato label{display:block;font-size:.72rem;font-weight:600;margin:9px 0 3px;color:var(--cinza);text-transform:uppercase;letter-spacing:.4px}#aba-contrato input, #aba-contrato textarea, #aba-contrato select{
+    width:100%;padding:8px 10px;border:1px solid var(--linha);border-radius:8px;
+    font-family:'Quicksand',sans-serif;font-size:.9rem;color:var(--azul);
+    background:#fbfbfb;transition:border .15s,box-shadow .15s;
+  }#aba-contrato input:focus, #aba-contrato textarea:focus, #aba-contrato select:focus{outline:none;border-color:var(--coral);box-shadow:0 0 0 3px rgba(232,155,160,.18);background:#fff}#aba-contrato textarea{resize:vertical;min-height:42px}#aba-contrato .lin2{display:grid;grid-template-columns:1fr 1fr;gap:10px}#aba-contrato .lin3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}/* itens do kit */
+  #aba-contrato #itens-lista{display:flex;flex-direction:column;gap:6px;margin-top:4px}#aba-contrato .item-row{display:flex;gap:6px;align-items:center}#aba-contrato .item-row input{flex:1}#aba-contrato .btn-x{
+    flex:0 0 auto;width:30px;height:34px;border:none;border-radius:7px;
+    background:#f3d9db;color:var(--coral-forte);font-weight:700;cursor:pointer;font-size:1rem;line-height:1;
+  }#aba-contrato .btn-x:hover{background:var(--coral);color:#fff}#aba-contrato .btn-add{
+    margin-top:8px;width:100%;padding:8px;border:1px dashed var(--coral);
+    background:transparent;color:var(--coral-forte);border-radius:8px;font-weight:600;cursor:pointer;font-family:'Quicksand',sans-serif;font-size:.85rem;
+  }#aba-contrato .btn-add:hover{background:var(--rosa-bg)}#aba-contrato .total-box{
+    margin-top:10px;padding:10px 12px;background:var(--rosa-bg);border-radius:8px;
+    display:flex;justify-content:space-between;align-items:center;font-weight:700;
+  }#aba-contrato .total-box span:last-child{font-size:1.2rem;color:var(--coral-forte)}#aba-contrato .grupo-sub{font-size:.74rem;font-weight:700;color:var(--cinza);text-transform:uppercase;letter-spacing:.4px;margin:14px 0 6px}#aba-contrato .ckq-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0;font-size:.8rem;border-bottom:1px solid #f0f0f0}#aba-contrato .ckq-nome{flex:1;color:var(--azul)}#aba-contrato .ckq-row input[type=number]{width:52px;padding:5px 6px;text-align:center;flex:0 0 auto}#aba-contrato .ckq-extra{display:flex;align-items:center;gap:3px;font-size:.66rem;color:var(--cinza);flex:0 0 auto;cursor:pointer;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px}#aba-contrato .ckq-extra input{width:15px;height:15px;accent-color:var(--coral-forte);cursor:pointer}#aba-contrato .acoes{padding:20px 28px 0;display:flex;flex-direction:column;gap:10px}#aba-contrato .btn-pdf{
+    padding:14px;border:none;border-radius:10px;cursor:pointer;font-family:'Quicksand',sans-serif;
+    font-size:1rem;font-weight:700;color:#fff;
+    background:linear-gradient(135deg,var(--coral-forte),var(--coral));
+    box-shadow:0 6px 16px rgba(217,120,127,.35);transition:transform .12s,box-shadow .12s;
+  }#aba-contrato .btn-pdf:hover{transform:translateY(-2px);box-shadow:0 9px 22px rgba(217,120,127,.45)}#aba-contrato .btn-sec{
+    padding:10px;border:1px solid var(--azul-bebe);border-radius:9px;cursor:pointer;
+    background:#fff;color:var(--azul);font-family:'Quicksand',sans-serif;font-weight:600;font-size:.85rem;
+  }#aba-contrato .btn-sec:hover{background:#eef6fb}#aba-contrato .dica{font-size:.72rem;color:var(--cinza);text-align:center;line-height:1.4;padding:0 4px}#aba-contrato .logo-upload{display:flex;gap:8px;align-items:center;margin-top:4px}#aba-contrato .logo-upload input[type=file]{font-size:.75rem;padding:6px}/* ---------- MODAL EXTRAS ---------- */
+  #aba-contrato .modal-bg{position:fixed;inset:0;background:rgba(43,58,103,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}#aba-contrato .modal-bg.show{display:flex}#aba-contrato .modal{background:#fff;border-radius:14px;max-width:430px;width:100%;max-height:86vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}#aba-contrato .modal-head{background:var(--rosa-bg);padding:16px 22px;border-bottom:2px solid var(--coral);position:sticky;top:0;z-index:2}#aba-contrato .modal-head h3{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700}#aba-contrato .modal-head p{font-size:.74rem;color:var(--cinza);margin-top:2px}#aba-contrato .modal-body{padding:8px 22px}#aba-contrato .extra-opt{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #eee}#aba-contrato .extra-opt:last-child{border-bottom:none}#aba-contrato .extra-opt input[type=checkbox]{width:18px;height:18px;flex:0 0 auto;accent-color:var(--coral-forte);cursor:pointer}#aba-contrato .eo-info{flex:1}#aba-contrato .eo-nome{font-weight:600;font-size:.9rem;color:var(--azul)}#aba-contrato .eo-desc{font-size:.72rem;color:var(--cinza)}#aba-contrato .eo-preco{font-weight:700;color:var(--coral-forte);font-size:.82rem;margin-top:1px}#aba-contrato .eo-qtd{width:54px;padding:6px;text-align:center;border:1px solid var(--linha);border-radius:7px;flex:0 0 auto}#aba-contrato .modal-foot{padding:14px 22px;display:flex;gap:10px;border-top:1px solid #eee;position:sticky;bottom:0;background:#fff}#aba-contrato .modal-foot button{flex:1;padding:11px;border-radius:9px;font-family:'Quicksand',sans-serif;font-weight:700;cursor:pointer;font-size:.9rem;border:none}#aba-contrato .mf-add{background:linear-gradient(135deg,var(--coral-forte),var(--coral));color:#fff}#aba-contrato .mf-cancel{background:#eee;color:var(--azul)}/* ---------- PREVIEW ---------- */
+  #aba-contrato .preview-wrap{padding:30px 30px 60px;display:flex;flex-direction:column;align-items:center;gap:26px}#aba-contrato .pagina{
+    background:#fff;width:210mm;min-height:297mm;padding:18mm 16mm;
+    box-shadow:0 10px 40px rgba(43,58,103,.14);
+    color:#333;font-size:11.2px;line-height:1.5;position:relative;
+  }#aba-contrato .ct-logo{display:flex;justify-content:center;margin-bottom:6px}#aba-contrato .ct-logo img, #aba-contrato .ct-logo svg{height:115px;width:auto}#aba-contrato .ct-titulo{text-align:center;font-family:'Cormorant Garamond',serif;margin:8px 0 18px}#aba-contrato .ct-titulo h2{font-size:19px;font-weight:600;letter-spacing:1px;color:#3a3a3a}#aba-contrato .ct-titulo h3{font-size:15px;font-weight:600;letter-spacing:2px;color:#3a3a3a;margin-top:1px}#aba-contrato .ct-parte-tit{font-size:11px;letter-spacing:2px;font-weight:700;color:#333;margin:14px 0 5px}#aba-contrato .ct-dados{display:grid;grid-template-columns:1fr 1fr;gap:1px 30px;font-size:11px}#aba-contrato .ct-dados .full{grid-column:1 / -1}#aba-contrato .ct-dados b{font-weight:400;color:#333}#aba-contrato .ct-sec{margin-top:16px}#aba-contrato .ct-sec-tit{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:600;color:#3a3a3a;letter-spacing:.5px}#aba-contrato .ct-sec-line{border-bottom:1.5px dotted #c9c9c9;margin:2px 0 8px}#aba-contrato .ct-sec ul{margin:4px 0 4px 18px}#aba-contrato .ct-sec li{margin-bottom:2px}#aba-contrato .ct-sec p{margin-bottom:3px}#aba-contrato .ct-intro{margin-bottom:4px}#aba-contrato .ct-periodo{margin:8px 0 8px 18px}#aba-contrato .ct-periodo li{margin-bottom:8px;font-weight:600}#aba-contrato .ct-assinaturas{display:flex;justify-content:space-around;margin-top:60px;text-align:center;font-size:11px}#aba-contrato .ct-assinaturas .ass{width:42%}#aba-contrato .ct-assinaturas .linha-ass{border-top:1px solid #555;padding-top:4px}#aba-contrato .ct-cidade{margin-top:26px;font-size:11px}#aba-contrato .ct-pagenum{position:absolute;bottom:10mm;left:0;right:0;text-align:center;font-family:'Cormorant Garamond',serif;font-size:12px;color:#555}#aba-contrato .mob-hint{display:none}/* ---------- CHECKLIST ---------- */
+  #aba-contrato .pagina-checklist{font-size:11px;color:#333}#aba-contrato .chk-header{display:flex;gap:16px;align-items:flex-start;margin-bottom:10px}#aba-contrato .chk-logo img, #aba-contrato .chk-logo svg{height:78px;width:auto}#aba-contrato .chk-dados{flex:1;padding-top:6px}#aba-contrato .chk-nome{font-weight:700;font-size:13.5px;margin-bottom:5px;color:#222}#aba-contrato .chk-linha{display:flex;justify-content:space-between;gap:24px;margin-bottom:2px}#aba-contrato .chk-linha b{font-weight:400}#aba-contrato .chk-linha .lbl{font-weight:700}#aba-contrato .chk-titulo{text-align:center;font-weight:700;font-size:13.5px;margin:12px 0 14px;letter-spacing:.4px;color:#222}#aba-contrato .chk-valores{display:grid;grid-template-columns:1fr 1fr;gap:4px 30px;margin-bottom:14px}#aba-contrato .chk-valores .lbl{font-weight:700}#aba-contrato .chk-obs-row{display:flex;gap:18px;margin-bottom:16px}#aba-contrato .chk-foto{width:165px;height:165px;background:#f4f4f4;border:1px dashed #cfcfcf;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;flex:0 0 auto;overflow:hidden;text-align:center}#aba-contrato .chk-foto img{width:100%;height:100%;object-fit:cover}#aba-contrato .chk-obs{flex:1}#aba-contrato .chk-obs .lbl{font-weight:700}#aba-contrato .chk-table{width:100%;border-collapse:collapse;margin-top:4px}#aba-contrato .chk-table th{font-size:10.5px;font-weight:700;padding:5px 6px;border-bottom:1.5px solid #333;text-transform:uppercase;color:#222}#aba-contrato .chk-table th.c, #aba-contrato .chk-table td.c{text-align:center}#aba-contrato .chk-table td{padding:7px 6px;border-bottom:1px solid #ededed}#aba-contrato .chk-box{width:16px;height:16px;border:1px solid #888;border-radius:3px;margin:0 auto;display:block}#aba-contrato .chk-box.marcado{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#222;line-height:1}/* ---------- RESPONSIVO ---------- */
+  @media(max-width:980px){#aba-contrato .app{grid-template-columns:1fr}#aba-contrato .painel{height:auto;position:static;border-right:none;border-bottom:1px solid var(--linha)}#aba-contrato .preview-wrap{padding:18px 10px 50px}#aba-contrato .pagina{width:100%;min-height:auto;padding:24px 18px;transform:none}#aba-contrato .mob-hint{display:block;font-size:.75rem;text-align:center;color:var(--cinza);padding:6px 16px 0}
+  }/* ---------- IMPRESSÃO / PDF ---------- */
+  @page{size:A4;margin:0}@media print{#aba-contrato{background:#fff}#aba-contrato .painel, #aba-contrato .mob-hint{display:none !important}#aba-contrato .app{display:block}#aba-contrato .preview-wrap{padding:0;gap:0;display:block}#aba-contrato .pagina{
+      width:210mm;min-height:297mm;box-shadow:none;margin:0;
+      padding:16mm 15mm;page-break-after:always;
+    }#aba-contrato .pagina:last-child{page-break-after:auto}body.modo-contrato #aba-contrato .pagina-checklist{display:none}body.modo-checklist #aba-contrato .pagina:not(.pagina-checklist){display:none}body.modo-checklist #aba-contrato .pagina-checklist{page-break-after:auto}
+  }
+
+/* ═══ APPS SCRIPT: carregamento, toast global, copiar manual ═══ */
+#carregando{position:fixed;inset:0;background:#faf6f2;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;z-index:200;font-family:'Jost',sans-serif;color:#9a8388;font-size:14px;text-align:center;padding:24px}
+#carregando .giro{width:34px;height:34px;border:3px solid #ecdadd;border-top-color:#c9607c;border-radius:50%;animation:giro 0.9s linear infinite}
+#carregando.erro .giro{display:none}
+#carregando.erro{color:#a33}
+#carregando.some{display:none}
+@keyframes giro{to{transform:rotate(360deg)}}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#2a1f22;color:#fff;
+  font-family:'Jost',sans-serif;font-size:14px;padding:11px 18px;border-radius:24px;opacity:0;pointer-events:none;
+  transition:.25s;z-index:190;max-width:92vw;text-align:center}
+#toast.ver{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+#toast a{color:#f5b8c7}
+#modal-copia{position:fixed;inset:0;background:rgba(42,31,34,.45);display:none;align-items:center;justify-content:center;z-index:195;padding:16px}
+#modal-copia.show{display:flex}
+#modal-copia .cx{background:#fff;border-radius:16px;padding:16px;width:100%;max-width:440px;font-family:'Jost',sans-serif}
+#modal-copia textarea{width:100%;height:220px;margin:10px 0;padding:10px;border:1px solid #ecdadd;border-radius:10px;font:13px 'Jost',sans-serif}
+#modal-copia button{padding:10px 16px;border:none;border-radius:10px;background:#c9607c;color:#fff;font:500 14px 'Jost',sans-serif}
+#aba-orcamento .planilha-link{font-size:13px;color:#c9607c;text-align:center}
+#aba-orcamento #novo-cat{padding:9px 11px;border:1px solid var(--line);border-radius:9px;font-family:'Jost';font-size:14px;background:#fff;color:var(--ink)}
+@media print{#toast,#carregando,#modal-copia{display:none!important}}
+</style>
+
+</head>
+<body>
+
+<div id="carregando"><div class="giro"></div><div id="carregando-msg">Carregando dados da planilha…</div>
+  <div id="pin-box" style="display:none;flex-direction:column;gap:10px;width:240px">
+    <input id="pin-nome" placeholder="Seu nome (ex.: Mayara)" maxlength="40" style="padding:12px;border:1px solid #ecdadd;border-radius:10px;font:16px Jost,sans-serif;text-align:center">
+    <input id="pin-cod" type="password" inputmode="numeric" autocomplete="off" placeholder="PIN" style="padding:12px;border:1px solid #ecdadd;border-radius:10px;font:16px Jost,sans-serif;text-align:center">
+    <button id="pin-ok" style="padding:12px;border:none;border-radius:10px;background:#c9607c;color:#fff;font:500 15px Jost,sans-serif">Entrar</button>
+  </div></div>
+<div id="toast"></div>
+<div id="modal-copia"><div class="cx">
+  <b>Copie o texto abaixo</b>
+  <textarea id="modal-copia-txt" readonly></textarea>
+  <button onclick="document.getElementById('modal-copia').classList.remove('show')">Fechar</button>
+</div></div>
+
+<div class="shell-topo">
+  <div class="shell-marca"><span class="serifa">GM CelebrArt</span><span class="sub">Central Pegue &amp; Monte</span></div>
+  <nav class="shell-tabs">
+    <button class="shell-tab sel" data-aba="orcamento">1 · Orçamento</button>
+    <button class="shell-tab" data-aba="proposta">2 · Proposta</button>
+    <button class="shell-tab" data-aba="contrato">3 · Contrato</button>
+  </nav>
+</div>
+
+<section class="aba ativa" id="aba-orcamento">
+
+<div class="card">
+  <div class="acervo-topo">
+    <span class="lbl">Itens do acervo</span>
+    <button class="kit clear" data-kit="clear" id="bt-limpar">Limpar seleção</button>
+  </div>
+  <ul id="list"></ul>
+  <div class="addrow">
+    <input type="text" class="an" id="novo-nome" placeholder="Novo item (ex.: Cesto de flores)" maxlength="42">
+    <input type="number" class="av" id="novo-valor" placeholder="R$" min="0" step="0.01" inputmode="decimal">
+    <button id="novo-add" title="Adicionar ao acervo">+</button>
+  </div>
+  <div class="addrow" style="margin-top:6px">
+    <select id="novo-cat" style="flex:1 1 auto"></select>
+  </div>
+  <div class="pct" style="margin-top:12px;border-top:1px solid #f3e8ea;padding-top:12px">
+    <span style="font-size:13px;color:#8a6b70">Cobrar</span>
+    <input type="number" id="pct" value="20" min="0" max="100">
+    <span style="font-size:13px;color:#8a6b70">% do valor de compra</span>
+  </div>
+  <p class="hint" style="text-align:left;margin-top:10px">Toque em ✎ para mudar nome e valor de compra, ou em × para remover.
+    As mudanças vão direto para a planilha e aparecem nos dois celulares.</p>
+  <div id="orc-aviso" class="orc-aviso"></div>
+  <div class="publicar">
+    <button id="bt-recarregar-acervo">↻ Atualizar lista da planilha</button>
+    <a class="planilha-link" id="link-planilha" href="#" target="_blank" rel="noopener">Abrir a planilha (acervo, kits, extras, temas, histórico)</a>
+  </div>
+</div>
+
+<div class="card">
+  <span class="lbl">Por evento</span>
+  <div class="mod-toggle" id="orc-mod">
+    <button data-mod="montado" class="on">Decoração montada</button>
+    <button data-mod="pm">Pegue e Monte</button>
+  </div>
+  <div class="row"><span>Adesivo personalizado (uso único)</span><input type="number" id="adesivo" placeholder="0,00"></div>
+  <div class="row"><span>Arco de balões</span><input type="number" id="arco" placeholder="0,00"></div>
+  <div class="row"><span>Montagem + retirada</span><input type="number" id="montagem" placeholder="0,00"></div>
+  <div class="row"><span>Frete / deslocamento</span><input type="number" id="frete" placeholder="0,00"></div>
+  <p class="hint" id="orc-mod-hint" style="text-align:left">Montagem, entrega e retirada feitas pela equipe.</p>
+</div>
+
+<button class="ponte" id="orc-para-proposta">Enviar para a Proposta →</button>
+
+<div class="total">
+  <div><div class="t1">Total a cobrar</div><div class="t2" id="totalVal">R$ 0</div></div>
+  <button id="copy">Copiar</button>
+</div>
+<p class="hint" id="copied"></p>
+
+</section>
+
+<section class="aba" id="aba-proposta">
+
+
+<div class="topo">
+  <img id="logo-topo" alt="GM CelebrArt">
+  <div>
+    <h1 class="serif">Proposta</h1>
+    <div class="et">GM CelebrArt</div>
+  </div>
+  <div class="dir">
+    <button class="ic" id="bt-modelos" title="Modelos salvos">📁</button>
+    <button class="ic" id="bt-novo" title="Nova proposta">✛</button>
+  </div>
+</div>
+
+<div class="envoltorio">
+
+  <!-- ───── FORMULÁRIO ───── -->
+  <div class="coluna-form">
+
+    <div class="cartao">
+      <div class="eyebrow">Identificação</div>
+      <h2 class="serif">Cliente & evento</h2>
+      <label>Modalidade</label>
+      <select id="f-mod">
+        <option value="montado">Decoração montada (equipe monta e desmonta)</option>
+        <option value="pm">Pegue e Monte (cliente retira e devolve)</option>
+      </select>
+      <label>Nome do cliente</label>
+      <input type="text" id="f-cliente" placeholder="Ex.: Ana Paula">
+      <div class="dupla">
+        <div><label>WhatsApp do cliente</label><input type="text" id="f-zap" placeholder="(41) 9...."></div>
+        <div><label>Nº da proposta</label><input type="text" id="f-numero" placeholder="auto"></div>
+      </div>
+      <label>Tema da decoração</label>
+      <input type="text" id="f-tema" placeholder="Ex.: Safari Baby" list="temas">
+      <datalist id="temas"></datalist>
+      <div class="dupla">
+        <div><label>Aniversariante</label><input type="text" id="f-aniv" placeholder="Ex.: Helena"></div>
+        <div><label>Idade / ocasião</label><input type="text" id="f-idade" placeholder="Ex.: 2 anos"></div>
+      </div>
+      <div class="dupla">
+        <div><label>Data do evento</label><input type="date" id="f-data"></div>
+        <div><label>Local</label><input type="text" id="f-local" placeholder="Bairro / salão"></div>
+      </div>
+    </div>
+
+    <div class="cartao">
+      <div class="eyebrow">Foto opcional</div>
+      <h2 class="serif">Imagem da proposta</h2>
+      <p class="sub">Anexe uma foto da decoração, referência ou mockup. É opcional — a proposta funciona sem ela.</p>
+      <div id="zona-img">
+        <div class="dropzone" id="dropzone">
+          <span class="emoji">🖼️</span>
+          Toque para anexar uma imagem
+        </div>
+      </div>
+      <input type="file" id="inp-img" accept="image/*" hidden>
+    </div>
+
+    <div class="cartao">
+      <div class="eyebrow">Valores</div>
+      <h2 class="serif">Kit & itens</h2>
+      <p class="sub">Escolha um kit base — os itens que vêm nele já aparecem marcados. Toque para tirar, ou adicione outros.</p>
+      <div class="chips" id="chips-kits"></div>
+
+      <div id="bloco-kit"></div>
+
+      <label style="margin-top:18px">Itens extras (cobrados à parte)</label>
+      <div class="chips" id="chips-extras"></div>
+      <div id="lista-itens"></div>
+      <button class="btn secundario" id="bt-add-item">+ Adicionar item livre</button>
+
+      <label style="margin-top:16px">Entrega / frete (opcional)</label>
+      <div class="item" style="margin-top:4px">
+        <input type="text" class="desc" id="f-entrega-desc" placeholder="Entrega e retirada" value="Entrega e retirada">
+        <input type="number" class="val" id="f-entrega-val" placeholder="0" inputmode="decimal">
+      </div>
+
+      <div class="dupla" style="margin-top:14px">
+        <div><label>Sinal para reserva</label>
+          <div class="sinal-linha"><input type="number" id="f-sinal" value="50" inputmode="decimal">
+          <select id="f-sinal-tipo"><option value="valor">R$</option><option value="pct">%</option></select></div></div>
+        <div><label>Validade da proposta</label><input type="text" id="f-validade" value="7 dias" placeholder="7 dias"></div>
+      </div>
+    </div>
+
+    <div class="cartao">
+      <div class="eyebrow">Fechamento</div>
+      <h2 class="serif">Condições & observações</h2>
+      <textarea id="f-obs">Reserva garantida mediante pagamento do sinal. Valor restante pago até o dia do evento, antes da montagem. Montagem e desmontagem feitas pela nossa equipe.</textarea>
+      <div class="linha-botoes">
+        <button class="btn secundario" id="bt-salvar-modelo">💾 Salvar modelo</button>
+        <button class="btn secundario" id="bt-copiar">📋 Copiar p/ WhatsApp</button>
+      </div>
+      <button class="btn primario" id="bt-gerar-contrato">📑 Gerar contrato com estes dados</button>
+    </div>
+
+  </div>
+
+  <!-- ───── PREVIEW ───── -->
+  <div class="coluna-preview">
+    <div class="palco-prev">
+      <div class="fmt" id="fmt">
+        <button data-fmt="retrato" class="sel">📄 Retrato (A4)</button>
+        <button data-fmt="quadrado">⬛ Quadrado</button>
+        <button data-fmt="stories">📱 Stories</button>
+      </div>
+      <div id="wrap-svg"></div>
+      <div class="barra-prev">
+        <button class="btn primario" id="bt-png">⬇️ Baixar PNG</button>
+        <button class="btn secundario" id="bt-pdf">📄 Baixar PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- modal modelos -->
+<div class="veu" id="veu-modelos">
+  <div class="modal">
+    <h3 class="serif">Modelos salvos</h3>
+    <div id="lista-modelos"></div>
+    <p class="sub" style="margin-top:10px">Os modelos ficam na aba <b>Modelos</b> da planilha (a foto não é guardada no modelo).</p>
+    <button class="btn secundario" id="fechar-modelos" style="margin-top:8px">Fechar</button>
+  </div>
+</div>
+
+<div id="folha-print"></div>
+<div id="aviso"></div>
+
+
+</section>
+
+<section class="aba" id="aba-contrato">
+
+<div class="app">
+
+  <!-- ============ PAINEL DE PREENCHIMENTO ============ -->
+  <aside class="painel">
+    <div class="painel-header">
+      <h1>Gerador de Contrato</h1>
+      <p>GM CelebrArt · <span id="c_sub">Decoração montada</span></p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Modalidade</div>
+      <select id="c_mod" onchange="trocarModalidade()">
+        <option value="montado">Decoração montada (equipe monta e desmonta)</option>
+        <option value="pm">Pegue e Monte (cliente retira e devolve)</option>
+      </select>
+      <p class="dica" style="text-align:left;margin:6px 0 0">Muda as cláusulas, as datas e os textos do contrato e do checklist.</p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Dados do Cliente</div>
+      <label>Nome completo</label>
+      <input id="c_nome" placeholder="Ex: Debora Lozano Garcia">
+      <label>Endereço</label>
+      <input id="c_end" placeholder="Rua / Avenida">
+      <div class="lin2">
+        <div><label>Número</label><input id="c_num" placeholder="128"></div>
+        <div><label>Bairro</label><input id="c_bairro" placeholder="Centro"></div>
+      </div>
+      <div class="lin2">
+        <div><label>CPF / CNPJ</label><input id="c_cpf" placeholder="000.000.000-00"></div>
+        <div><label>Telefone / Contato</label><input id="c_tel" placeholder="(41) 99999-9999"></div>
+      </div>
+      <div class="lin2">
+        <div><label>Tipo de evento</label><input id="c_tipo" placeholder="Chá de bebê"></div>
+        <div><label>Tema</label><input id="c_tema" placeholder="Safari Baby"></div>
+      </div>
+      <label>Data do evento</label>
+      <input id="c_data" type="date">
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Tema & Kit (do catálogo)</div>
+      <div class="lin2">
+        <div>
+          <label>Tema</label>
+          <select id="sel-tema" onchange="preencherCatalogo()"></select>
+        </div>
+        <div>
+          <label>Kit</label>
+          <select id="sel-kit" onchange="preencherCatalogo()"></select>
+        </div>
+      </div>
+      <p class="dica" id="kit-info" style="text-align:left;margin:8px 0 0">Selecione tema e kit para preencher os itens e o valor automaticamente. Depois você pode editar à vontade.</p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Itens do Kit</div>
+      <div id="itens-lista"></div>
+      <button class="btn-add" onclick="addItem()">+ adicionar item</button>
+      <button class="btn-add" onclick="abrirExtras()" style="margin-top:6px;border-style:solid;background:var(--rosa-bg)">★ item extra do catálogo</button>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Período de Locação</div>
+      <label id="lbl_ini">Montagem</label>
+      <div class="lin2">
+        <input id="p_entrega_data" type="date">
+        <input id="p_entrega_compl" placeholder="às 09:30hrs no Clube Bosch">
+      </div>
+      <label style="margin-top:10px" id="lbl_fim">Desmontagem</label>
+      <div class="lin2">
+        <input id="p_devolucao_data" type="date">
+        <input id="p_devolucao_compl" placeholder="às 20hrs no Clube Bosch">
+      </div>
+      <p class="dica" style="text-align:left;margin-top:6px">Escolha a data no calendário (ou digite) e complemente com hora/local ao lado.</p>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Valores</div>
+      <div class="lin3">
+        <div><label id="lbl_vkit">Decoração</label><input id="v_kit" type="number" value="0" oninput="calc()"></div>
+        <div><label>Item extra</label><input id="v_extra" type="number" value="0" oninput="calc()"></div>
+        <div><label id="lbl_vent">Montagem/frete</label><input id="v_entrega" type="number" value="0" oninput="calc()"></div>
+      </div>
+      <label>Sinal para reserva (abatido do total)</label>
+      <div class="lin2" style="grid-template-columns:1fr 70px">
+        <input id="v_sinal" type="number" value="50" oninput="render()">
+        <select id="v_sinal_tipo" onchange="render()"><option value="valor">R$</option><option value="pct">%</option></select>
+      </div>
+      <p class="dica" id="sinal-info" style="text-align:left;margin:6px 0 0"></p>
+      <div class="total-box"><span>TOTAL</span><span id="total-disp">R$ 0,00</span></div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Data do Contrato</div>
+      <label>Selecionar no calendário</label>
+      <input id="d_data" type="date" onchange="dataContratoPicker()">
+      <div class="lin3" style="margin-top:8px">
+        <div><label>Dia</label><input id="d_dia" placeholder="16"></div>
+        <div><label>Mês</label><input id="d_mes" placeholder="maio"></div>
+        <div><label>Ano</label><input id="d_ano"></div>
+      </div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Checklist de Conferência</div>
+      <div class="lin2">
+        <div><label>Forma de pagamento</label><input id="chk_pgto" value="Pix"></div>
+        <div><label>Foto da montagem</label><input type="file" id="chk_foto" accept="image/*" onchange="carregarFoto(event)" style="font-size:.72rem;padding:6px"></div>
+      </div>
+      <label>Observações</label>
+      <textarea id="chk_obs" placeholder="Ex: Desconto de R$10,00 na entrega/retirada do Kit."></textarea>
+      <div class="grupo-sub">Quantidade de cada item</div>
+      <p class="dica" style="text-align:left;margin:0 0 6px">Selecione o kit acima para preencher as quantidades padrão. Ajuste conforme o evento. As colunas de marcação saem em branco para preencher à mão.</p>
+      <div id="chk_qtd_lista"></div>
+    </div>
+
+    <div class="grupo">
+      <div class="grupo-titulo">Logo (opcional)</div>
+      <p class="dica" style="text-align:left;margin-bottom:6px">Para trocar a logo do contrato, suba o PNG transparente. Ela fica salva no Drive (pasta Imagens) e vale para os dois celulares. ↺ volta para a padrão.</p>
+      <div class="logo-upload">
+        <input type="file" id="logo-file" accept="image/*" onchange="carregarLogo(event)">
+        <button class="btn-x" title="Remover logo enviada" onclick="removerLogo()">↺</button>
+      </div>
+    </div>
+
+    <div class="acoes">
+      <button class="btn-pdf" onclick="gerarPDF('contrato')">⬇ PDF do Contrato</button>
+      <button class="btn-pdf" onclick="gerarPDF('checklist')" style="background:linear-gradient(135deg,#2b3a67,#46598f);box-shadow:0 6px 16px rgba(43,58,103,.3)">⬇ PDF do Checklist</button>
+      <button class="btn-sec" onclick="limparTudo()">Limpar formulário</button>
+      <p class="dica">Na janela de impressão escolha <b>"Salvar como PDF"</b> e deixe as margens em <b>"Padrão"</b> ou <b>"Nenhuma"</b>.</p>
+    </div>
+  </aside>
+
+  <!-- ============ PREVIEW DO CONTRATO ============ -->
+  <main>
+    <p class="mob-hint">↓ Prévia do contrato. Para gerar o PDF, use os botões no fim do formulário.</p>
+    <div class="preview-wrap">
+
+      <!-- PÁGINA 1 -->
+      <section class="pagina">
+        <div class="ct-logo" id="logo-1"></div>
+        <div class="ct-titulo"><h2>CONTRATO DE LOCAÇÃO</h2><h3><span class="so-pm">PEGUE E MONTE</span><span class="so-mon">DECORAÇÃO COM MONTAGEM</span></h3></div>
+
+        <div class="ct-parte-tit">C O N T R A T A N T E :</div>
+        <div class="ct-dados">
+          <div class="full">Nome: <b id="o_nome">—</b></div>
+          <div>Endereço: <b id="o_end">—</b></div>
+          <div>Numero: <b id="o_num">—</b></div>
+          <div>CPF/CNPJ: <b id="o_cpf">—</b></div>
+          <div>Telefone: <b id="o_tel">—</b></div>
+          <div>Tipo de Evento: <b id="o_tipo">—</b></div>
+          <div>Tema: <b id="o_tema">—</b></div>
+          <div class="full">Data do Evento: <b id="o_data">—</b></div>
+        </div>
+
+        <div class="ct-parte-tit" style="margin-top:14px">C O N T R A T A D O :</div>
+        <div class="ct-dados">
+          <div class="full">Nome: <b class="cfg-empresa">GM Celebrart</b></div>
+          <div>Endereço: <b class="cfg-endereco"></b></div>
+          <div>Numero: <b class="cfg-numero"></b></div>
+          <div>Celular: <b class="cfg-contato1_tel"></b></div>
+          <div>Celular: <b class="cfg-contato2_tel"></b></div>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">1 OBJETO DO CONTRATO</div><div class="ct-sec-line"></div>
+          <p class="ct-intro so-pm">Locação do Kit "Pegue e Monte" no tema escolhido, contendo:</p>
+          <p class="ct-intro so-mon">Locação de decoração no tema escolhido, com montagem e desmontagem pela contratada, contendo:</p>
+          <ul id="o_itens"></ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">2 OBRIGAÇÕES DO CONTRATADO</div><div class="ct-sec-line"></div>
+          <ul>
+            <li>Entregar os itens limpos e em bom estado.</li>
+            <li class="so-pm">Disponibilizar para retirada ou realizar entrega/retirada conforme combinado.</li>
+            <li class="so-mon">Realizar a montagem no local do evento, na data e horário combinados.</li>
+            <li class="so-mon">Realizar a desmontagem e a retirada dos itens após o evento, no horário combinado.</li>
+          </ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">3 OBRIGAÇÕES DO CONTRATANTE</div><div class="ct-sec-line"></div>
+          <ul>
+            <li>Utilizar os itens somente para o evento contratado.</li>
+            <li class="so-pm">Manter os itens em bom estado e devolvê-los na data/hora combinada.</li>
+            <li class="so-pm">Retirar e devolver no endereço combinado (não permitido via Uber).</li>
+            <li class="so-pm">Estar presente no momento da entrega/retirada.</li>
+            <li class="so-pm">Garantir espaço no carro para transporte (porta-malas/bancos livres).</li>
+            <li class="so-mon">Garantir acesso ao local nos horários de montagem e desmontagem (portaria, elevador e liberação do salão).</li>
+            <li class="so-mon">Informar com antecedência as regras do local, como horários permitidos e ausência de elevador ou tomada.</li>
+            <li class="so-mon">Não mover, desmontar ou retirar peças da decoração durante o evento.</li>
+            <li class="so-mon">Indicar um responsável para acompanhar o início da montagem e a desmontagem.</li>
+          </ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">4 DANOS E PERDAS</div><div class="ct-sec-line"></div>
+          <p>O contratante responde por perdas, quebras ou danos<span class="so-mon"> ocorridos entre o fim da montagem e o início da desmontagem</span>. Em caso de dano leve pagará o valor para conserto do item e em caso de dano irreparável, pagará o valor de reposição.</p>
+        </div>
+
+        <div class="ct-pagenum">- 1 -</div>
+      </section>
+
+      <!-- PÁGINA 2 -->
+      <section class="pagina">
+        <div class="ct-logo" id="logo-2"></div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">5 PERÍODO DE LOCAÇÃO</div><div class="ct-sec-line"></div>
+          <p>5.1 A locação dos itens será valida no período de:</p>
+          <ul class="ct-periodo">
+            <li><span class="so-pm">DATA DA ENTREGA/RETIRADA</span><span class="so-mon">MONTAGEM</span>: <span id="o_entrega">—</span></li>
+            <li><span class="so-pm">DATA DA RETIRADA/DEVOLUÇÃO</span><span class="so-mon">DESMONTAGEM</span>: <span id="o_devolucao">—</span></li>
+          </ul>
+          <div class="so-pm">
+            <p>5.2 A devolução deverá acontecer até a hora do dia marcado para a devolução.</p>
+            <p>5.3 Em caso de o contratante não devolver os itens no prazo estabelecido, será cobrada uma multa diária de <span class="cfg-multa">R$20,00</span> por dia atrasado.</p>
+            <p>5.4 Em caso de entrega e retirada será cobrado um valor referente ao trajeto de ida e volta do local do evento.</p>
+            <p>5.5 A retirada é feita no endereço da contratada. Não serão permitidas retiradas e devoluções via Uber.</p>
+            <p>5.6 O contratante deverá estar presente no dia da retirada/entrega e da devolução/retirada do kit.</p>
+            <p>5.7 Solicitamos ao contratante que esteja com porta-malas e bancos traseiros do carro livres para que possa caber o kit.</p>
+          </div>
+          <div class="so-mon">
+            <p>5.2 A montagem e a desmontagem serão feitas pela equipe da contratada, nos horários acima.</p>
+            <p>5.3 Caso o local não esteja liberado no horário combinado, poderá ser cobrada taxa de espera ou de novo deslocamento.</p>
+            <p>5.4 O valor de montagem, desmontagem e deslocamento está descrito no item 6.</p>
+            <p>5.5 O contratante, ou o responsável indicado, deverá estar presente no início da montagem e na desmontagem para conferência dos itens.</p>
+          </div>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">6 VALOR E FORMA DE PAGAMENTO</div><div class="ct-sec-line"></div>
+          <ul>
+            <li><span class="so-pm">Kit básico</span><span class="so-mon">Decoração</span>: <span id="o_kit">R$140,00</span></li>
+            <li>Item extra: <span id="o_extra">R$0,00</span></li>
+            <li><span class="so-pm">Entrega/retirada</span><span class="so-mon">Montagem, entrega e retirada</span>: <span id="o_ent_v">R$0,00</span></li>
+            <li>Total: <b id="o_total">R$140,00</b></li>
+          </ul>
+          <p style="margin-top:6px">Condições:</p>
+          <ul>
+            <li>Sinal de <span id="o_sinal">R$50,00</span> para reserva (abatido do total).</li>
+            <li>Valor restante de <span id="o_rest">R$0,00</span>, pago <span class="so-pm">na retirada do kit.</span><span class="so-mon">até o dia do evento, antes do início da montagem.</span></li>
+            <li>Formas: Pix, débito, crédito (1x sem juros, parcelado com juros da maquininha).</li>
+          </ul>
+          <p style="margin-top:6px">Multas ou taxas extras:</p>
+          <ul>
+            <li class="so-pm"><span class="cfg-multa">R$20,00</span> por dia de atraso na devolução.</li>
+            <li class="so-pm">Taxa extra em caso de entrega/retirada fora do combinado.</li>
+            <li class="so-mon">Taxa extra caso a montagem ou a desmontagem não possa ser feita no horário combinado.</li>
+          </ul>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">7 CANCELAMENTO</div><div class="ct-sec-line"></div>
+          <p>Cancelamento até 10 dias antes: devolução de 50% do valor pago. Após esse prazo, não há reembolso.</p>
+        </div>
+
+        <div class="ct-sec">
+          <div class="ct-sec-tit">8 DISPOSIÇÕES GERAIS</div><div class="ct-sec-line"></div>
+          <ul>
+            <li>Não é permitido alterar ou sublocar os itens.</li>
+            <li>A contratada não se responsabiliza por imprevistos externos (clima, falhas inesperadas etc.).</li>
+          </ul>
+          <p class="ct-cidade"><span class="cfg-cidade">Curitiba</span>, <span id="o_dia">___</span> de <span id="o_mes">_______</span> de <span id="o_ano">2026</span>.</p>
+        </div>
+
+        <div class="ct-assinaturas">
+          <div class="ass"><div class="linha-ass"><b id="o_ass">_______________</b><br>CONTRATANTE</div></div>
+          <div class="ass"><div class="linha-ass"><b class="cfg-empresa">GM Celebrart</b><br>CONTRATADO</div></div>
+        </div>
+
+        <div class="ct-pagenum">- 2 -</div>
+      </section>
+
+      <!-- PÁGINA CHECKLIST -->
+      <section class="pagina pagina-checklist">
+        <div class="chk-header">
+          <div class="chk-logo" id="logo-chk"></div>
+          <div class="chk-dados">
+            <div class="chk-nome" id="ck_nome">—</div>
+            <div class="chk-linha"><span><span class="lbl">Endereço da festa:</span> <b id="ck_end">—</b></span><span><span class="lbl">Nº</span> <b id="ck_num">—</b></span></div>
+            <div class="chk-linha"><span><span class="lbl">Bairro:</span> <b id="ck_bairro">—</b></span><span><span class="lbl">Contato:</span> <b id="ck_tel">—</b></span></div>
+            <div class="chk-linha"><span><span class="lbl"><span class="so-pm">Data da retirada</span><span class="so-mon">Montagem</span>:</span> <b id="ck_retirada">—</b></span><span><span class="lbl"><span class="so-pm">Data da devolução</span><span class="so-mon">Desmontagem</span>:</span> <b id="ck_devol">—</b></span></div>
+          </div>
+        </div>
+
+        <div class="chk-titulo" id="ck_titulo">—</div>
+
+        <div class="chk-valores">
+          <div><span class="lbl"><span class="so-pm">Valor do Kit</span><span class="so-mon">Valor da decoração</span>:</span> <b id="ck_vkit">R$0,00</b></div>
+          <div><span class="lbl">Valor restante a ser pago:</span> <b id="ck_rest">R$0,00</b></div>
+          <div><span class="lbl"><span class="so-pm">Valor da entrega</span><span class="so-mon">Montagem/frete</span>:</span> <b id="ck_vent">R$0,00</b></div>
+          <div><span class="lbl">Forma de pagamento:</span> <b id="ck_pgto">Pix</b></div>
+          <div><span class="lbl">Valor do sinal:</span> <b id="ck_sinal">R$0,00</b></div>
+        </div>
+
+        <div class="chk-obs-row">
+          <div class="chk-foto" id="ck_foto">foto da montagem</div>
+          <div class="chk-obs"><span class="lbl">Observações:</span><br><span id="ck_obs"></span></div>
+        </div>
+
+        <table class="chk-table">
+          <thead>
+            <tr>
+              <th>Itens disponíveis</th><th class="c">Quant.</th>
+              <th class="c">Item extra</th><th class="c">Conferido</th><th class="c">Ida</th><th class="c">Volta</th>
+            </tr>
+          </thead>
+          <tbody id="ck_tbody"></tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL ITENS EXTRAS -->
+<div class="modal-bg" id="modal-extras" onclick="if(event.target===this)fecharExtras()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Itens Extras</h3>
+      <p>Marque os itens e a quantidade — são somados em "Item extra".</p>
+    </div>
+    <div class="modal-body" id="extras-body"></div>
+    <div class="modal-foot">
+      <button class="mf-cancel" onclick="fecharExtras()">Cancelar</button>
+      <button class="mf-add" onclick="confirmarExtras()">Adicionar selecionados</button>
+    </div>
+  </div>
+</div>
+
+
+</section>
+
+<script>
+/* ═══ Utilidades compartilhadas pelas três abas ═══ */
+window.APP = { pin: '', quem: '', boot: null, img: { logo: null, logoContrato: null, fotos: {} } };
+
+/* chama uma função do Code.gs e devolve Promise */
+/* Endereço do Apps Script (Implantar → Gerenciar implantações → URL do App da Web) */
+const API_URL = 'https://script.google.com/macros/s/AKfycbwln-OCoPg7gCLnWaohw1YqurLeNa3EOJ_7-VRl4g016y18vqP-EdGB5Qq4e3ameEoH/exec';
+
+/* text/plain evita o "preflight" de CORS, que o Apps Script não responde */
+function srv(nome) {
+  const args = Array.prototype.slice.call(arguments, 1);
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ pin: APP.pin, quem: APP.quem, nome: nome, args: args })
+  })
+    .catch(function () { throw new Error('Sem conexão com o servidor. Verifique a internet.'); })
+    .then(function (r) { if (!r.ok) throw new Error('Servidor respondeu ' + r.status); return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.e); return j.v; });
+}
+
+/* aviso flutuante (aceita HTML só quando comHtml=true) */
+function toast(msg, ms, comHtml) {
+  const t = document.getElementById('toast');
+  if (comHtml) t.innerHTML = msg; else t.textContent = msg;
+  t.classList.add('ver');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function () { t.classList.remove('ver'); }, ms || 2400);
+}
+
+/* escapa para usar dentro de HTML e de atributos */
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+/* copiar: no iframe do Apps Script o navigator.clipboard costuma ser bloqueado,
+   então tenta execCommand (síncrono, dentro do toque), depois a API, e por fim abre o texto para copiar à mão */
+function copiarTexto(txt, msgOk) {
+  msgOk = msgOk || 'Copiado ✓';
+  let ok = false;
+  const ta = document.createElement('textarea');
+  ta.value = txt; ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+  document.body.appendChild(ta);
+  ta.select(); ta.setSelectionRange(0, txt.length);
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  ta.remove();
+  if (ok) { toast(msgOk); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(function () { toast(msgOk); }, function () { copiaManual(txt); });
+  } else copiaManual(txt);
+}
+function copiaManual(txt) {
+  const m = document.getElementById('modal-copia'), ta = document.getElementById('modal-copia-txt');
+  ta.value = txt; m.classList.add('show');
+  setTimeout(function () { ta.focus(); ta.select(); }, 50);
+}
+
+/* datas no fuso local (toISOString usa UTC e virava o dia depois das 21h) */
+function hojeISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function isoParaBR(iso) {
+  if (!iso) return '';
+  const p = String(iso).split('-');
+  return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso;
+}
+
+/* nomes próprios: mesma regra nas abas Proposta e Contrato ("Ana da Silva") */
+const MINUSC = ['de', 'da', 'do', 'das', 'dos', 'e', 'di', 'du', 'del', 'dello', 'la', 'le'];
+function titleCasePT(str) {
+  return String(str || '').toLowerCase().replace(/\s+/g, ' ').trim().split(' ').map(function (w, i) {
+    if (!w) return w;
+    if (i > 0 && MINUSC.indexOf(w) >= 0) return w;
+    return w.replace(/(^|['’\-])(\p{L})/gu, function (m, a, b) { return a + b.toUpperCase(); });
+  }).join(' ');
+}
+
+const LSX = {
+  get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: function (k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
+  del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+function jparse(s, fb) { try { const v = JSON.parse(s); return v == null ? fb : v; } catch (e) { return fb; } }
+
+function cfg(k, fb) {
+  const v = APP.boot && APP.boot.cfg ? APP.boot.cfg[k] : undefined;
+  return (v === undefined || v === null || v === '') ? fb : v;
+}
+</script>
+
+<script>
+/* ═══ ABA 1 · ORÇAMENTO ═══
+   Acervo vem da aba "Acervo" da planilha. Editar/criar/remover grava direto lá. */
+function initOrcamento(B) {
+  const ROOT = document.getElementById('aba-orcamento');
+  const $o = id => document.getElementById(id);
+
+  function avisoOrc(msg, tipo) {
+    const el = $o('orc-aviso'); if (!el) return;
+    if (!msg) { el.className = 'orc-aviso'; el.textContent = ''; return; }
+    el.className = 'orc-aviso on ' + (tipo || 'ok'); el.textContent = msg;
+  }
+
+  /* categorias — as marcadas "oculta" entram no preço mas NÃO aparecem na descrição do cliente */
+  const CATS = B.cats.length ? B.cats : [{ id: 'Decoração', nome: 'Decoração' }];
+  const CAT_PADRAO = (CATS.find(c => /decora/i.test(c.id)) || CATS.find(c => !c.oculta) || CATS[0]).id;
+  const catOculta = id => { const c = CATS.find(x => x.id === id); return !!(c && c.oculta); };
+
+  let ACERVO = B.acervo.slice();
+  const acervo = () => ACERVO;
+  const itemPorNome = n => ACERVO.find(it => it.n === n);
+
+  let checked = new Set();
+  const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const pctEl = $o('pct');
+  const list = $o('list');
+  pctEl.value = Number(cfg('pct_padrao', 20)) || 20;
+
+  let editando = null;   // nome do item em modo de edição
+  let abertas = new Set(jparse(LSX.get('gm_cats_abertas'), []));   // preferência só deste aparelho
+  function salvarAbertas() { LSX.set('gm_cats_abertas', JSON.stringify([...abertas])); }
+
+  /* troca a lista local pela da planilha (pega também o que o outro aparelho mudou) */
+  function aplicarAcervo(lista) {
+    ACERVO = lista;
+    [...checked].forEach(n => { if (!itemPorNome(n)) checked.delete(n); });
+    build(); total();
+  }
+  function recarregar(msg) {
+    return srv('acervoListar').then(l => { aplicarAcervo(l); if (msg) avisoOrc(msg, 'ok'); })
+      .catch(e => avisoOrc('Não consegui ler a planilha: ' + e.message, 'erro'));
+  }
+  /* grava no servidor; a tela já mudou (otimista). Se falhar, avisa e recarrega a lista real. */
+  function gravar(promessa) {
+    avisoOrc('');
+    return promessa.then(aplicarAcervo).catch(e => {
+      avisoOrc('Não salvou: ' + e.message, 'erro');
+      recarregar();
+    });
+  }
+
+  function build() {
+    list.innerHTML = '';
+    const p = +pctEl.value / 100;
+    const grupos = CATS.map(c => ({ cat: c, itens: acervo().filter(it => (it.cat || CAT_PADRAO) === c.id) }))
+      .filter(g => g.itens.length);
+    const orfaos = acervo().filter(it => !CATS.some(c => c.id === (it.cat || CAT_PADRAO)));
+    if (orfaos.length) grupos.push({ cat: { id: '__outros', nome: 'Outros' }, itens: orfaos });
+
+    grupos.forEach(g => {
+      const marcados = g.itens.filter(it => checked.has(it.n)).length;
+      const editandoAqui = g.itens.some(it => it.n === editando);
+      const aberta = abertas.has(g.cat.id) || editandoAqui;
+      const cab = document.createElement('li');
+      cab.className = 'cat-cab' + (g.cat.oculta ? ' oculta' : '') + (aberta ? ' aberta' : '');
+      cab.innerHTML = `<span class="cat-seta">${aberta ? '▾' : '▸'}</span>
+        <span class="cat-nome">${escHtml(g.cat.nome)}</span>
+        ${g.cat.oculta ? '<span class="cat-tag">não aparece p/ o cliente</span>' : ''}
+        <span class="cat-cont${marcados ? ' tem' : ''}">${marcados ? marcados + '/' : ''}${g.itens.length}</span>`;
+      cab.onclick = () => {
+        if (abertas.has(g.cat.id)) abertas.delete(g.cat.id); else abertas.add(g.cat.id);
+        salvarAbertas(); build();
+      };
+      list.appendChild(cab);
+      if (aberta) g.itens.forEach(it => montarItem(it, p));
+    });
+  }
+
+  function montarItem(it, p) {
+    const li = document.createElement('li');
+
+    if (editando === it.n) {                      // ---- modo edição ----
+      li.className = 'item editando';
+      li.innerHTML = `<input type="text" class="ed-nome" value="${escHtml(it.n)}" maxlength="60">
+        <input type="number" class="ed-valor" value="${it.c}" min="0" step="0.01" inputmode="decimal">
+        <select class="ed-cat">${CATS.map(c => `<option value="${escHtml(c.id)}"${(it.cat || CAT_PADRAO) === c.id ? ' selected' : ''}>${escHtml(c.nome)}</option>`).join('')}</select>
+        <button class="ed-ok" title="Salvar">✓</button>
+        <button class="ed-cancel" title="Cancelar">✕</button>`;
+      const nEl = li.querySelector('.ed-nome'), vEl = li.querySelector('.ed-valor');
+      const fechar = () => { editando = null; build(); total(); };
+      const salvar = () => {
+        const novoNome = nEl.value.trim();
+        const novoVal = parseFloat(vEl.value);
+        let ok = true;
+        if (!novoNome || (novoNome !== it.n && itemPorNome(novoNome))) { nEl.classList.add('erro'); ok = false; setTimeout(() => nEl.classList.remove('erro'), 1200); }
+        if (!(novoVal >= 0) || !isFinite(novoVal)) { vEl.classList.add('erro'); ok = false; setTimeout(() => vEl.classList.remove('erro'), 1200); }
+        if (!ok) return;
+        const antigo = it.n;
+        const novo = { n: novoNome, c: Math.round(novoVal * 100) / 100, cat: li.querySelector('.ed-cat').value };
+        if (novoNome !== antigo && checked.has(antigo)) { checked.delete(antigo); checked.add(novoNome); }
+        Object.assign(it, novo);
+        fechar();
+        gravar(srv('acervoSalvar', antigo, novo));
+      };
+      li.onclick = ev => ev.stopPropagation();
+      li.querySelector('.ed-ok').onclick = ev => { ev.stopPropagation(); salvar(); };
+      li.querySelector('.ed-cancel').onclick = ev => { ev.stopPropagation(); fechar(); };
+      [nEl, vEl].forEach(el => el.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); salvar(); }
+        if (e.key === 'Escape') { e.preventDefault(); fechar(); }
+      }));
+      list.appendChild(li);
+      setTimeout(() => nEl.focus(), 0);
+      return;
+    }
+
+    li.className = 'item' + (checked.has(it.n) ? ' on' : '');
+    li.innerHTML = `<div class="box">${checked.has(it.n) ? '✓' : ''}</div>
+      <div class="nm">${escHtml(it.n)}</div><div class="vl">${fmt(it.c * p)}</div>
+      <button class="ed" title="Editar nome e valor">✎</button>
+      <button class="rm" title="Remover do acervo">×</button>`;
+    li.onclick = () => { checked.has(it.n) ? checked.delete(it.n) : checked.add(it.n); build(); total(); };
+    li.querySelector('.ed').onclick = ev => { ev.stopPropagation(); editando = it.n; abertas.add(it.cat || CAT_PADRAO); salvarAbertas(); build(); };
+    li.querySelector('.rm').onclick = ev => {
+      ev.stopPropagation();
+      if (!confirm('Remover "' + it.n + '" do acervo (vale para os dois celulares)?')) return;
+      ACERVO = ACERVO.filter(x => x.n !== it.n);
+      checked.delete(it.n);
+      build(); total();
+      gravar(srv('acervoRemover', it.n));
+    };
+    list.appendChild(li);
+  }
+
+  function somaServicos() {
+    return {
+      ad: +$o('adesivo').value || 0, ar: +$o('arco').value || 0,
+      mo: +$o('montagem').value || 0, fr: +$o('frete').value || 0
+    };
+  }
+  function total() {
+    const p = +pctEl.value / 100;
+    let t = 0; checked.forEach(n => { const it = itemPorNome(n); if (it) t += it.c * p; });
+    const s = somaServicos();
+    t += s.ad + s.ar + s.mo + s.fr;
+    $o('totalVal').textContent = fmt(Math.round(t * 100) / 100);
+  }
+
+  $o('bt-limpar').onclick = () => { checked.clear(); build(); total(); };
+
+  // adicionar item novo ao acervo
+  $o('novo-add').onclick = () => {
+    const nEl = $o('novo-nome'), vEl = $o('novo-valor');
+    const nome = nEl.value.trim();
+    const val = parseFloat(vEl.value);
+    let ok = true;
+    if (!nome || itemPorNome(nome)) { nEl.classList.add('erro'); ok = false; setTimeout(() => nEl.classList.remove('erro'), 1200); }
+    if (!(val > 0)) { vEl.classList.add('erro'); ok = false; setTimeout(() => vEl.classList.remove('erro'), 1200); }
+    if (!ok) return;
+    const catNova = $o('novo-cat').value || CAT_PADRAO;
+    const novo = { n: nome, c: Math.round(val * 100) / 100, cat: catNova };
+    ACERVO.push(novo);
+    abertas.add(catNova); salvarAbertas();
+    checked.add(nome);
+    nEl.value = ''; vEl.value = '';
+    build(); total();
+    gravar(srv('acervoSalvar', '', novo));
+  };
+  $o('novo-valor').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $o('novo-add').onclick(); } });
+  $o('novo-nome').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $o('novo-valor').focus(); } });
+  $o('novo-nome').maxLength = 60;
+  $o('novo-cat').innerHTML = CATS.map(c => `<option value="${escHtml(c.id)}"${c.id === CAT_PADRAO ? ' selected' : ''}>${escHtml(c.nome)}</option>`).join('');
+
+  $o('bt-recarregar-acervo').onclick = () => recarregar('Lista atualizada com a planilha ✓');
+  $o('link-planilha').href = B.planilhaUrl;
+
+  ['pct', 'adesivo', 'arco', 'montagem', 'frete'].forEach(id => $o(id).addEventListener('input', () => { build(); total(); }));
+
+  $o('copy').onclick = () => {
+    const p = +pctEl.value / 100; const linhas = []; let t = 0;
+    acervo().forEach(it => {
+      if (!checked.has(it.n)) return;
+      t += it.c * p;                                                    // materiais entram no preço…
+      if (!catOculta(it.cat || CAT_PADRAO)) linhas.push('• ' + it.n);   // …mas não na descrição
+    });
+    const s = somaServicos();
+    if (s.ad) linhas.push('• Adesivo personalizado');
+    if (s.ar) linhas.push('• Arco de balões');
+    const extra = [];
+    if (s.mo || s.fr) extra.push(modalidade === 'pm'
+      ? 'Inclui entrega e retirada.'
+      : 'Inclui montagem no local e retirada após a festa.');
+    t += s.ad + s.ar + s.mo + s.fr;
+    const txt = `✦ GM CelebrArt ✦\n\nDecoração inclusa:\n${linhas.join('\n')}\n\n${extra.join(' ')}\nValor: ${fmt(Math.round(t * 100) / 100)}`
+      .replace(/\n{3,}/g, '\n\n').trim();
+    copiarTexto(txt, 'Copiado! É só colar no WhatsApp.');
+  };
+
+  let modalidade = 'montado';
+  (function () {
+    const box = $o('orc-mod');
+    const hint = $o('orc-mod-hint');
+    const set = m => {
+      modalidade = m;
+      box.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mod === m));
+      hint.textContent = m === 'pm'
+        ? 'Pegue e Monte: o cliente retira e devolve. Montagem e frete só se combinado.'
+        : 'Montagem, entrega e retirada feitas pela equipe.';
+    };
+    box.querySelectorAll('button').forEach(b => b.onclick = () => set(b.dataset.mod));
+    set('montado');
+  })();
+
+  function dados() {
+    const p = +pctEl.value / 100;
+    let aluguel = 0; const nomes = [];
+    acervo().forEach(it => {
+      if (!checked.has(it.n)) return;
+      aluguel += it.c * p;
+      if (!catOculta(it.cat || CAT_PADRAO)) nomes.push(it.n);
+    });
+    const s = somaServicos();
+    const r2 = x => Math.round(x * 100) / 100;
+    if (s.ar) nomes.push('Arco de balões');
+    return {
+      itens: nomes,
+      kitNome: null,
+      valorKit: r2(aluguel + s.ad + s.ar),
+      temAdesivo: s.ad > 0,
+      temArco: s.ar > 0,
+      servico: r2(s.mo + s.fr),
+      total: r2(aluguel + s.ad + s.ar + s.mo + s.fr),
+      modalidade
+    };
+  }
+  window.ORC = { dados };
+
+  build(); total();
+}
+</script>
+
+<script>
+/* ═══ ABA 2 · PROPOSTA ═══ */
+function initProposta(B){
+
+/* ╔═══════════════════════════════════════════════╗
+   ║  GM CelebrArt · Gerador de Propostas           ║
+   ╚═══════════════════════════════════════════════╝ */
+/* logo: vem do Drive (pasta Imagens/logo.*); enquanto não chega, usa a logo desenhada */
+let LOGO_SRC = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LOGO_SVG.trim());
+const $ = id => document.getElementById(id);
+const ROOT = document.getElementById('aba-proposta');
+
+/* kits: aba "Kits" (preço) + aba "ItensKit" (o que vem em cada kit) */
+const KITS = {};
+B.kits.forEach(k => {
+  KITS[k.nome] = {
+    v: k.preco === '' ? '' : k.preco,
+    inclui: B.itensKit.filter(r => r.contrato && (r.qtd[k.nome] || 0) > 0).map(r => r.contrato)
+  };
+});
+const SINAL_PADRAO = String(cfg('sinal_padrao', 50));
+const VALIDADE_PADRAO = String(cfg('validade_padrao', '7 dias'));
+
+let estado = {
+  numero:'', cliente:'', zap:'', tema:'', aniv:'', idade:'', data:'', local:'',
+  kit:null,                    // { nome, val, inclui:[...] }
+  itens:[],                    // extras cobrados à parte
+  entregaDesc:'Entrega e retirada', entregaVal:'',
+  sinal:SINAL_PADRAO, sinalTipo:'valor', modalidade:'montado', validade:VALIDADE_PADRAO,
+  obs:'Reserva garantida mediante pagamento do sinal. Valor restante pago até o dia do evento, antes da montagem. Montagem e desmontagem feitas pela nossa equipe.',
+  img:null, imgW:null, imgH:null, imgZoom:100, imgX:50, imgY:50
+};
+const OBS_PADRAO={ pm:'Reserva garantida mediante pagamento do sinal. Valor restante pago na retirada do kit. Itens devolvidos limpos e sem danos.', montado:'Reserva garantida mediante pagamento do sinal. Valor restante pago até o dia do evento, antes da montagem. Montagem e desmontagem feitas pela nossa equipe.' };
+const OBS_ANTIGA='Reserva garantida mediante sinal de R$50. Valor restante pago na retirada do kit. Itens devolvidos limpos e sem danos.';
+const ehMontado=()=>estado.modalidade!=='pm';
+let formato = 'retrato';
+const FORMATOS = { retrato:[1240,1754], quadrado:[1240,1240], stories:[1080,1920] };
+
+/* ───── helpers ───── */
+function moeda(n){
+  n = +n || 0;
+  return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+const esc = escHtml;                 // agora também escapa aspas (bug: aspas quebravam value="…")
+const capNome = titleCasePT;         // mesma regra do contrato ("Ana da Silva")
+function mascaraTel(v){
+  const d = (v||'').replace(/\D/g,'').slice(0,11);
+  if(!d) return '';
+  if(d.length <= 2) return '(' + d;
+  if(d.length <= 6) return '(' + d.slice(0,2) + ') ' + d.slice(2);
+  if(d.length <= 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+}
+function dataBR(iso){
+  if(!iso) return '';
+  const [a,m,d] = iso.split('-'); if(!d) return iso;
+  return `${d}/${m}/${a}`;
+}
+function avisar(t){
+  const a = $('aviso'); a.textContent = t; a.classList.add('ver');
+  clearTimeout(avisar._t); avisar._t = setTimeout(() => a.classList.remove('ver'), 2200);
+}
+function quebrar(texto, max){
+  const palavras = (texto || '').split(/\s+/);
+  const linhas = []; let atual = '';
+  for(const p of palavras){
+    if((atual + ' ' + p).trim().length > max){ if(atual) linhas.push(atual); atual = p; }
+    else atual = (atual + ' ' + p).trim();
+  }
+  if(atual) linhas.push(atual);
+  return linhas.length ? linhas : [''];
+}
+
+/* ───── número automático ─────
+   Antes: o contador local nunca avançava e toda proposta saía com o mesmo número.
+   Agora: o servidor reserva AAMM-NN (único entre aparelhos) na hora de gerar o PDF/PNG. */
+function garantirNumero(){
+  coletar();
+  if(estado.numero) return Promise.resolve(estado.numero);
+  return srv('propostaReservarNumero').then(n => {
+    estado.numero = n; $('f-numero').value = n; atualizar(); return n;
+  }).catch(e => { console.error(e); return ''; });
+}
+
+/* ───── coletar formulário → estado ───── */
+function coletar(){
+  estado.numero = $('f-numero').value.trim();
+  estado.cliente = $('f-cliente').value.trim();
+  estado.zap = $('f-zap').value.trim();
+  estado.tema = $('f-tema').value.trim();
+  estado.aniv = $('f-aniv').value.trim();
+  estado.idade = $('f-idade').value.trim();
+  estado.data = $('f-data').value;
+  estado.local = $('f-local').value.trim();
+  estado.entregaDesc = $('f-entrega-desc').value.trim();
+  estado.entregaVal = $('f-entrega-val').value;
+  estado.sinal = $('f-sinal').value;
+  estado.sinalTipo = $('f-sinal-tipo').value;
+  estado.modalidade = $('f-mod').value;
+  estado.validade = $('f-validade').value.trim();
+  estado.obs = $('f-obs').value.trim();
+  estado.itens = [...ROOT.querySelectorAll('#lista-itens .item')].map(el => ({
+    desc: el.querySelector('.desc').value.trim(),
+    val: el.querySelector('.val').value,
+    chk: el.dataset.chk || ''          // liga o extra ao item do checklist do contrato
+  })).filter(i => i.desc || i.val);
+  // kit: valor e itens inclusos marcados
+  if(estado.kit){
+    const nEl = ROOT.querySelector('.kit-nome-inp');
+    if(nEl) estado.kit.nome = nEl.value.trim();
+    const vEl = ROOT.querySelector('.kit-val');
+    if(vEl) estado.kit.val = vEl.value;
+    const incs = [...ROOT.querySelectorAll('.incluso-chips .inc')];
+    if(incs.length) estado.kit.inclui = incs.filter(c => !c.classList.contains('off')).map(c => c.dataset.nome);
+  }
+}
+
+function preencherForm(){
+  $('f-numero').value = estado.numero;
+  $('f-cliente').value = estado.cliente;
+  $('f-zap').value = estado.zap;
+  $('f-tema').value = estado.tema;
+  $('f-aniv').value = estado.aniv;
+  $('f-idade').value = estado.idade;
+  $('f-data').value = estado.data;
+  $('f-local').value = estado.local;
+  $('f-entrega-desc').value = estado.entregaDesc;
+  $('f-entrega-val').value = estado.entregaVal;
+  $('f-sinal').value = estado.sinal;
+  $('f-sinal-tipo').value = estado.sinalTipo==='pct'?'pct':'valor';
+  $('f-mod').value = estado.modalidade==='pm'?'pm':'montado';
+  $('f-validade').value = estado.validade;
+  $('f-obs').value = estado.obs;
+  $('lista-itens').innerHTML = '';
+  estado.itens.forEach(addItem);
+  renderKit();
+  renderImagem();
+}
+
+/* ───── kit base ───── */
+function escolherKit(nome){
+  // mantém o valor já digitado se for o mesmo kit; senão usa o padrão
+  const mesmo = estado.kit && estado.kit.nome === nome;
+  estado.kit = {
+    nome,
+    val: mesmo ? estado.kit.val : KITS[nome].v,
+    inclui: KITS[nome].inclui.slice()
+  };
+  renderKit(); atualizar();
+}
+function renderKit(){
+  const box = $('bloco-kit');
+  ROOT.querySelectorAll('.chip.kit').forEach(c =>
+    c.classList.toggle('sel', estado.kit && c.dataset.kit === estado.kit.nome));
+  if(!estado.kit){ box.innerHTML = ''; return; }
+  const k = estado.kit;
+  const padrao = KITS[k.nome] ? KITS[k.nome].inclui : [];
+  // une itens padrão (marcados/desmarcados) + personalizados que ele adicionou
+  const personalizados = k.inclui.filter(i => !padrao.includes(i));
+  const lista = padrao.concat(personalizados);
+  box.innerHTML = `
+    <div class="kit-box">
+      <div class="kit-cab">
+        <input class="kit-nome-inp" value="${esc(k.nome)}" placeholder="Nome do kit" maxlength="28">
+        <input class="kit-val" type="number" inputmode="decimal" placeholder="0" value="${k.val}">
+        <button class="kit-rem" title="Remover kit">×</button>
+      </div>
+      <div class="kit-sub">O QUE VEM NO KIT — toque para tirar:</div>
+      <div class="incluso-chips">
+        ${lista.map(nome => `<button class="inc${k.inclui.includes(nome)?'':' off'}" data-nome="${esc(nome)}">${esc(nome)}</button>`).join('')}
+      </div>
+      <div class="add-inc">
+        <input id="inp-inc" placeholder="${lista.length ? 'Incluir outro item no kit' : 'Adicionar item ao kit'}" maxlength="40">
+        <button id="bt-add-inc" title="Adicionar">+</button>
+      </div>
+    </div>`;
+  box.querySelector('.kit-rem').onclick = () => { estado.kit = null; renderKit(); atualizar(); };
+  box.querySelector('.kit-val').addEventListener('input', atualizar);
+  box.querySelector('.kit-nome-inp').addEventListener('input', e => { estado.kit.nome = e.target.value; atualizar(); });
+  box.querySelectorAll('.inc').forEach(c => c.onclick = () => { c.classList.toggle('off'); atualizar(); });
+  const addInc = () => {
+    const inp = $('inp-inc'); const v = inp.value.trim();
+    if(!v) return;
+    if(!estado.kit.inclui.includes(v)) estado.kit.inclui.push(v);
+    inp.value = ''; renderKit(); atualizar();
+  };
+  box.querySelector('#bt-add-inc').onclick = addInc;
+  box.querySelector('#inp-inc').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addInc(); } });
+}
+
+/* ───── itens extras ───── */
+function addItem(item){
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.dataset.chk = (item && item.chk) || '';
+  div.innerHTML = `
+    <input type="text" class="desc" placeholder="Descrição do item" value="${esc(item&&item.desc||'')}">
+    <input type="number" class="val" placeholder="0" inputmode="decimal" value="${esc(item&&item.val||'')}">
+    <button class="rem" title="Remover">×</button>`;
+  div.querySelector('.rem').onclick = () => { div.remove(); atualizar(); };
+  div.querySelectorAll('input').forEach(i => i.addEventListener('input', atualizar));
+  $('lista-itens').appendChild(div);
+}
+
+/* ───── totais ───── */
+function totais(){
+  const kit = estado.kit ? (+estado.kit.val || 0) : 0;
+  const extras = estado.itens.reduce((s,i) => s + (+i.val || 0), 0);
+  const entrega = +estado.entregaVal || 0;
+  const total = kit + extras + entrega;
+  const sv = +estado.sinal || 0;
+  const pct = estado.sinalTipo==='pct' ? Math.min(Math.max(sv,0),100) : null;
+  const bruto = pct!==null ? total*pct/100 : sv;
+  const sinal = Math.round(Math.min(Math.max(bruto,0), total)*100)/100;
+  return { kit, extras, entrega, total, sinal, pct, restante: Math.round((total - sinal)*100)/100 };
+}
+
+/* ───── render do SVG da proposta ───── */
+/* ───── layout da proposta em primitivas (fonte única p/ preview e export) ───── */
+function montarLayout(){
+  const [W] = FORMATOS[formato];
+  const M = 70, cw = W - M*2;
+  const t = totais();
+  const P = [];
+  let y = 0;
+
+  // tamanhos: títulos 11pt (~23px) e textos 8,5pt (~18px), na escala da página
+  const TIT = 23, TXT = 18;
+
+  const txt = (str, x, yy, opt={}) => P.push({t:'text', str:String(str==null?'':str), x, y:yy,
+    s:opt.s||TXT, serif:!!opt.serif, w:opt.w||400, fill:opt.fill||'#2a2a2a', anchor:opt.anchor||'start', ls:opt.ls||0});
+  const rect = (x,yy,w,h,o={}) => P.push({t:'rect', x, y:yy, w, h, r:o.r||0, fill:o.fill||null, stroke:o.stroke||null, sw:o.sw||1});
+  const line = (x1,yy1,x2,yy2,stroke,sw=1) => P.push({t:'line', x1, y1:yy1, x2, y2:yy2, stroke, sw});
+  const img = (href,x,yy,w,h,fit,r=0,opt={}) => P.push(Object.assign({t:'img', href, x, y:yy, w, h, fit, r}, opt));
+
+  // largura de fonte para quebra de linha real (mede em px se houver canvas)
+  const fontSpec = (s, serif, w=400) => `${w} ${s}px ${serif?"'Cormorant Garamond', serif":"'Jost', sans-serif"}`;
+  const quebraPx = (texto, s) => quebrarLargura(texto, cw, fontSpec(s, false));
+
+  // ── cabeçalho centralizado ──
+  const cx0 = W/2;
+  y = 54;
+  const tamLogo = 132;
+  img(LOGO_SRC, cx0 - tamLogo/2, y, tamLogo, tamLogo, 'contain');
+  y += tamLogo + 30;
+  txt(ehMontado() ? 'DECORAÇÃO PERSONALIZADA · MONTAGEM COMPLETA' : 'DECORAÇÃO PERSONALIZADA · PEGUE E MONTE', cx0, y, {s:TXT, fill:'#c9607c', ls:3, anchor:'middle', w:500});
+  y += 34;
+  line(M, y, W-M, y, '#ece2d8', 2);
+  y += 46;
+  txt(ehMontado() ? 'PROPOSTA DE DECORAÇÃO' : 'PROPOSTA DE LOCAÇÃO', cx0, y, {s:TIT, fill:'#c9607c', ls:4, w:500, anchor:'middle'});
+  y += 30;
+  const linhaInfo = (estado.numero ? 'Nº ' + estado.numero + '   ·   ' : '') +
+                    'Emitida em ' + dataBR(hojeISO());
+  txt(linhaInfo, cx0, y, {s:TXT, fill:'#888', anchor:'middle'});
+
+  // ── card único: cliente + evento (linhas corridas) ──
+  y += 54;
+  {
+    const rows = [];
+    rows.push(['Cliente', estado.cliente || '—', estado.zap ? 'WhatsApp' : '', estado.zap || '']);
+    if(estado.tema || estado.data)
+      rows.push(['Tema', estado.tema || '—', estado.data ? 'Data' : '', estado.data ? dataBR(estado.data) : '']);
+    if(estado.local) rows.push(['Local', estado.local, '', '']);
+    const rowH = 34, h = 30 + 38 + rows.length*rowH;
+    rect(M, y, cw, h, {r:16, fill:'#fdfbf9', stroke:'#ece2d8', sw:1.5});
+    txt('CLIENTE / EVENTO', W/2, y+38, {serif:true, s:TIT, w:600, anchor:'middle'});
+    let yy = y + 38 + 42;
+    for(const [rl, vl, rr, vr] of rows){
+      txt(rl, M+30, yy, {s:TXT, fill:'#888'});
+      txt(vl, M+155, yy, {s:TXT, w:500});
+      if(rr){
+        txt(rr, M+cw*0.52, yy, {s:TXT, fill:'#888'});
+        txt(vr, M+cw*0.52+135, yy, {s:TXT, w:500});
+      }
+      yy += rowH;
+    }
+    y += h + 18;
+  }
+
+  // ── imagem opcional (inteira por padrão, menor e centralizada) ──
+  if(estado.img){
+    const iw = estado.imgW, ih = estado.imgH;
+    let dw, dh;
+    if(iw && ih){
+      const maxW = cw*0.78, maxH = cw*0.54, ar = iw/ih;
+      dw = maxW; dh = dw/ar;
+      if(dh > maxH){ dh = maxH; dw = dh*ar; }
+    } else { dw = cw*0.78; dh = cw*0.5; }
+    const bx = M + (cw - dw)/2;
+    img(estado.img, bx, y, dw, dh, 'crop', 16,
+        {zoom: estado.imgZoom||100, ox: estado.imgX??50, oy: estado.imgY??50, iw, ih});
+    rect(bx, y, dw, dh, {r:16, stroke:'#ece2d8', sw:1.5});
+    y += dh + 18;
+  }
+
+  // ── investimento (centralizado, com respiro) ──
+  y += 34;
+  txt('INVESTIMENTO', W/2, y, {serif:true, s:TIT, w:600, anchor:'middle'});
+  y += 18;
+  line(M, y, W-M, y, '#ece2d8', 1.5);
+  y += 56;
+
+  const linhaItem = (desc, val) => {
+    txt(desc, M, y, {s:TXT, w:500});
+    txt(moeda(val), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 36;
+  };
+
+  if(!estado.kit && !estado.itens.length){
+    txt('Escolha um kit ou adicione itens', M, y, {s:TXT, fill:'#bbb'});
+    y += 36;
+  }
+  // kit: título, itens descritos (maiores), e o valor depois dos itens
+  if(estado.kit){
+    const nomeKit = (/^kit\b/i.test(estado.kit.nome) ? estado.kit.nome : 'Kit ' + estado.kit.nome).toUpperCase();
+    txt(nomeKit, M, y, {s:TIT, w:600});
+    y += 32;
+    const incl = (estado.kit.inclui || []).join('   ·   ');
+    if(incl){
+      quebraPx(incl, TXT).forEach(l => { txt(l, M, y, {s:TXT, fill:'#777'}); y += 26; });
+    }
+    y += 10;
+    txt(moeda(t.kit), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 34;
+  }
+  if(estado.itens.length){
+    if(estado.kit) line(M, y-12, W-M, y-12, '#f2ebe3', 1);
+    estado.itens.forEach(it => linhaItem(it.desc, it.val));
+  }
+  // entrega: divisor sutil e centralizado, com mesmo respiro acima e abaixo
+  if(t.entrega > 0){
+    const G = 26, lw = cw*0.42;
+    y += G;
+    line(W/2 - lw/2, y, W/2 + lw/2, y, '#ece2d8', 1);
+    y += G;
+    linhaItem(estado.entregaDesc || 'Entrega', t.entrega);
+  }
+
+  // ── total (mesma fonte dos demais valores) ──
+  y += 12;
+  rect(M, y, cw, 74, {r:14, fill:'#fdf3f6'});
+  txt('TOTAL', M+26, y+47, {s:TIT, w:600, fill:'#c9607c', ls:2});
+  txt(moeda(t.total), W-M-26, y+47, {s:TIT+2, w:600, fill:'#c9607c', anchor:'end'});
+  y += 96;
+
+  if(t.sinal > 0){
+    txt('Sinal p/ reserva' + (t.pct!==null ? ' (' + t.pct + '%)' : ''), M, y, {s:TXT, fill:'#888'});
+    txt(moeda(t.sinal), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 28;
+    txt('Valor restante', M, y, {s:TXT, fill:'#888'});
+    txt(moeda(t.restante), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 36;
+  }
+
+  // ── condições ──
+  if(estado.obs){
+    y += 12;
+    line(M, y, W-M, y, '#ece2d8', 1.5);
+    y += 36;
+    txt('CONDIÇÕES / OBSERVAÇÕES', W/2, y, {serif:true, s:TIT, w:600, anchor:'middle'});
+    y += 30;
+    quebraPx(estado.obs, TXT).forEach(l => { txt(l, M, y, {s:TXT, fill:'#666'}); y += 25; });
+  }
+
+  // ── altura final + rodapé ──
+  y += 36;
+  let H = FORMATOS[formato][1];
+  const rodape = 120;
+  H = (formato === 'retrato') ? y + rodape : Math.max(H, y + rodape);
+
+  line(M, H-96, W-M, H-96, '#ece2d8', 1.5);
+  txt(cfg('contato1_nome','Gabriel') + ' · ' + cfg('contato1_tel',''), M, H-64, {s:TXT});
+  txt(cfg('contato2_nome','Mayara') + ' · ' + cfg('contato2_tel',''), M, H-36, {s:TXT});
+  txt(cfg('regiao','Curitiba e região'), W-M, H-64, {s:TXT, fill:'#888', anchor:'end'});
+  txt(cfg('instagram','@gmcelebrart'), W-M, H-36, {s:TXT, fill:'#c9607c', anchor:'end'});
+  if(estado.validade){
+    txt(('Proposta válida por ' + estado.validade).toUpperCase(), W/2, H-50,
+        {s:TXT+2, fill:'#c9607c', w:600, anchor:'middle', ls:1});
+  }
+
+  // molduras (atrás de tudo)
+  P.unshift({t:'rect', x:20, y:20, w:W-40, h:H-40, r:26, fill:'#ffffff', stroke:'#f0e7df', sw:2});
+  P.unshift({t:'rect', x:0, y:0, w:W, h:H, r:0, fill:'#faf6f2'});
+
+  return {prims:P, W, H};
+}
+
+/* quebra de linha medindo a largura real (usa canvas; cai p/ heurística sem canvas) */
+let _medCtx = null;
+function quebrarLargura(texto, maxPx, fontSpec){
+  if(!_medCtx){ try{ _medCtx = document.createElement('canvas').getContext('2d'); }catch(e){ _medCtx = null; } }
+  if(_medCtx) _medCtx.font = fontSpec;
+  const larg = s => _medCtx ? _medCtx.measureText(s).width : s.length * 8.6;
+  if(_medCtx && larg('M') === 0) return quebrar(texto, Math.floor(maxPx/8.6)); // canvas sem medição
+  const palavras = (texto || '').split(/\s+/);
+  const linhas = []; let atual = '';
+  for(const p of palavras){
+    const teste = atual ? atual + ' ' + p : p;
+    if(larg(teste) > maxPx && atual){ linhas.push(atual); atual = p; }
+    else atual = teste;
+  }
+  if(atual) linhas.push(atual);
+  return linhas.length ? linhas : [''];
+}
+
+/* ───── emissor SVG (preview) ───── */
+function layoutParaSVG(L){
+  const fam = s => s ? "'Cormorant Garamond',serif" : "'Jost',sans-serif";
+  let cid = 0, defs = '', body = '';
+  for(const p of L.prims){
+    if(p.t === 'rect'){
+      body += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}" ` +
+        `fill="${p.fill||'none'}" ${p.stroke?`stroke="${p.stroke}" stroke-width="${p.sw}"`:''}/>`;
+    } else if(p.t === 'line'){
+      body += `<line x1="${p.x1}" y1="${p.y1}" x2="${p.x2}" y2="${p.y2}" stroke="${p.stroke}" stroke-width="${p.sw}"/>`;
+    } else if(p.t === 'text'){
+      body += `<text x="${p.x}" y="${p.y}" font-family="${fam(p.serif)}" font-size="${p.s}" ` +
+        `font-weight="${p.w}" fill="${p.fill}" ${p.anchor!=='start'?`text-anchor="${p.anchor}"`:''} ` +
+        `letter-spacing="${p.ls}">${esc(p.str)}</text>`;
+    } else if(p.t === 'img'){
+      if(p.fit === 'crop'){
+        const id = 'cl'+(cid++);
+        defs += `<clipPath id="${id}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}"/></clipPath>`;
+        if(p.iw && p.ih){
+          const baseS = Math.max(p.w/p.iw, p.h/p.ih);
+          const s = baseS * (p.zoom||100)/100;
+          const dw = p.iw*s, dh = p.ih*s;
+          const dx = p.x + (p.w-dw)*((p.ox??50)/100);
+          const dy = p.y + (p.h-dh)*((p.oy??50)/100);
+          body += `<image href="${p.href}" x="${dx}" y="${dy}" width="${dw}" height="${dh}" preserveAspectRatio="none" clip-path="url(#${id})"/>`;
+        } else {
+          // sem dimensões ainda: mostra a foto inteira dentro do box
+          body += `<image href="${p.href}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${id})"/>`;
+        }
+      } else {
+        const par = p.fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet';
+        if(p.r){
+          const id = 'cl'+(cid++);
+          defs += `<clipPath id="${id}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}"/></clipPath>`;
+          body += `<image href="${p.href}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="${par}" clip-path="url(#${id})"/>`;
+        } else {
+          body += `<image href="${p.href}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="${par}"/>`;
+        }
+      }
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L.W} ${L.H}" width="${L.W}" height="${L.H}"><defs>${defs}</defs>${body}</svg>`;
+}
+
+/* ───── emissor canvas (export) — desenha tudo direto, sem SVG ───── */
+function carregarImgs(hrefs){
+  const unicos = [...new Set(hrefs)];
+  return Promise.all(unicos.map(h => new Promise(res => {
+    const im = new Image();
+    im.onload = () => res([h, im]);
+    im.onerror = () => res([h, null]);
+    im.src = h;
+  }))).then(pares => Object.fromEntries(pares));
+}
+function caminhoRRect(cx, x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  cx.beginPath();
+  if(cx.roundRect){ cx.roundRect(x, y, w, h, r); return; }
+  cx.moveTo(x+r, y);
+  cx.arcTo(x+w, y, x+w, y+h, r);
+  cx.arcTo(x+w, y+h, x, y+h, r);
+  cx.arcTo(x, y+h, x, y, r);
+  cx.arcTo(x, y, x+w, y, r);
+  cx.closePath();
+}
+function layoutParaCanvas(L){
+  const hrefs = L.prims.filter(p => p.t === 'img').map(p => p.href);
+  return carregarImgs(hrefs).then(imgs => {
+    const cv = document.createElement('canvas');
+    cv.width = L.W; cv.height = L.H;
+    const cx = cv.getContext('2d');
+    cx.textBaseline = 'alphabetic';
+    const temLS = ('letterSpacing' in cx);
+    for(const p of L.prims){
+      if(p.t === 'rect'){
+        caminhoRRect(cx, p.x, p.y, p.w, p.h, p.r);
+        if(p.fill){ cx.fillStyle = p.fill; cx.fill(); }
+        if(p.stroke){ cx.strokeStyle = p.stroke; cx.lineWidth = p.sw; cx.stroke(); }
+      } else if(p.t === 'line'){
+        cx.beginPath(); cx.moveTo(p.x1, p.y1); cx.lineTo(p.x2, p.y2);
+        cx.strokeStyle = p.stroke; cx.lineWidth = p.sw; cx.stroke();
+      } else if(p.t === 'text'){
+        cx.font = `${p.w} ${p.s}px ${p.serif?"'Cormorant Garamond', serif":"'Jost', sans-serif"}`;
+        cx.fillStyle = p.fill;
+        cx.textAlign = p.anchor === 'end' ? 'right' : (p.anchor === 'middle' ? 'center' : 'left');
+        if(temLS) cx.letterSpacing = (p.ls||0) + 'px';
+        cx.fillText(p.str, p.x, p.y);
+        if(temLS) cx.letterSpacing = '0px';
+      } else if(p.t === 'img'){
+        const im = imgs[p.href];
+        if(!im){ continue; }
+        cx.save();
+        if(p.r){ caminhoRRect(cx, p.x, p.y, p.w, p.h, p.r); cx.clip(); }
+        const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+        if(p.fit === 'crop' && p.iw && p.ih){
+          const baseS = Math.max(p.w/p.iw, p.h/p.ih);
+          const s = baseS * (p.zoom||100)/100;
+          const dw = p.iw*s, dh = p.ih*s;
+          cx.drawImage(im, p.x + (p.w-dw)*((p.ox??50)/100), p.y + (p.h-dh)*((p.oy??50)/100), dw, dh);
+        } else if(p.fit === 'crop'){
+          // sem dimensões declaradas: foto inteira dentro do box
+          const f = Math.min(p.w/iw, p.h/ih);
+          const dw = iw*f, dh = ih*f;
+          cx.drawImage(im, p.x + (p.w-dw)/2, p.y + (p.h-dh)/2, dw, dh);
+        } else {
+          const f = p.fit === 'cover' ? Math.max(p.w/iw, p.h/ih) : Math.min(p.w/iw, p.h/ih);
+          const dw = iw*f, dh = ih*f;
+          cx.drawImage(im, p.x + (p.w-dw)/2, p.y + (p.h-dh)/2, dw, dh);
+        }
+        cx.restore();
+      }
+    }
+    return cv;
+  });
+}
+
+/* garante imgW/imgH mesmo para imagens salvas antes (auto-recupera) */
+let _imgCache = {};
+function garantirDimsImg(){
+  if(!estado.img) return;
+  if(estado.imgW && estado.imgH) return;
+  const c = _imgCache[estado.img];
+  if(c){ estado.imgW = c.w; estado.imgH = c.h; return; }
+  const im = new Image();
+  im.onload = () => {
+    _imgCache[estado.img] = {w: im.naturalWidth, h: im.naturalHeight};
+    if(estado.img){ estado.imgW = im.naturalWidth; estado.imgH = im.naturalHeight; atualizar(); }
+  };
+  im.src = estado.img;
+}
+
+function atualizar(){
+  coletar();
+  garantirDimsImg();
+  const svg = layoutParaSVG(montarLayout());
+  $('wrap-svg').innerHTML = svg.replace('<svg ', '<svg id="svg-prev" ');
+  agendarSalvar();
+}
+
+/* ───── imagem opcional ───── */
+function renderImagem(){
+  const zona = $('zona-img');
+  if(estado.img){
+    zona.innerHTML = `<div class="previa-img">
+      <img src="${estado.img}" alt="prévia">
+      <button class="tira" id="bt-tira-img" title="Remover">×</button>
+      <button class="trocar" id="bt-troca-img">Trocar</button>
+    </div>
+    <div class="ajuste-img">
+      <div class="ajuste-cab">
+        <span>Ajuste da foto</span>
+        <button id="bt-reset-img" title="Mostrar inteira">↺ Inteira</button>
+      </div>
+      <label>Zoom <small>(100% = foto inteira)</small></label>
+      <input type="range" id="sl-img-zoom" min="100" max="280" value="${estado.imgZoom||100}">
+      <label>Posição <small id="pos-dica">(dê zoom para poder mover)</small></label>
+      <div class="ajuste-2col">
+        <div><label>Horizontal</label><input type="range" id="sl-img-x" min="0" max="100" value="${estado.imgX??50}"></div>
+        <div><label>Vertical</label><input type="range" id="sl-img-y" min="0" max="100" value="${estado.imgY??50}"></div>
+      </div>
+    </div>`;
+    $('bt-tira-img').onclick = () => { estado.img = null; renderImagem(); atualizar(); };
+    $('bt-troca-img').onclick = () => $('inp-img').click();
+    const togglePos = () => {
+      const dis = (estado.imgZoom||100) <= 100;
+      $('sl-img-x').disabled = dis; $('sl-img-y').disabled = dis;
+      const dica = $('pos-dica');
+      if(dica) dica.textContent = dis ? '(dê zoom para poder mover)' : '(arraste para enquadrar)';
+    };
+    $('sl-img-zoom').addEventListener('input', e => { estado.imgZoom = +e.target.value; togglePos(); atualizar(); });
+    $('sl-img-x').addEventListener('input', e => { estado.imgX = +e.target.value; atualizar(); });
+    $('sl-img-y').addEventListener('input', e => { estado.imgY = +e.target.value; atualizar(); });
+    togglePos();
+    $('bt-reset-img').onclick = () => {
+      estado.imgZoom = 100; estado.imgX = 50; estado.imgY = 50;
+      $('sl-img-zoom').value = 100; $('sl-img-x').value = 50; $('sl-img-y').value = 50;
+      togglePos(); atualizar();
+    };
+  } else {
+    zona.innerHTML = `<div class="dropzone" id="dropzone"><span class="emoji">🖼️</span>Toque para anexar uma imagem</div>`;
+    $('dropzone').onclick = () => $('inp-img').click();
+  }
+}
+function redimensionar(dataURL, max, cb){
+  const img = new Image();
+  img.onload = () => {
+    let {width:w, height:h} = img;
+    if(Math.max(w,h) > max){ const f = max/Math.max(w,h); w = Math.round(w*f); h = Math.round(h*f); }
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(cv.toDataURL('image/jpeg', 0.86), w, h);
+  };
+  img.src = dataURL;
+}
+$('inp-img').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => redimensionar(r.result, 1400, (d, w, h) => {
+    estado.img = d; estado.imgW = w; estado.imgH = h;
+    _imgCache[d] = {w, h};
+    estado.imgZoom = 100; estado.imgX = 50; estado.imgY = 50;
+    renderImagem(); atualizar();
+  });
+  r.readAsDataURL(f);
+  e.target.value = '';
+});
+
+/* ───── exportação ───── */
+function nomeArquivo(ext){
+  const c = (estado.cliente || 'proposta').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return `gm-celebrart-${c}.${ext}`;
+}
+/* iOS/iPadOS: Safari ignora a.download e bloqueia click assíncrono; melhor abrir em nova aba */
+function ehIOS(){
+  const ua = navigator.userAgent || '';
+  return /iP(hone|ad|od)/.test(ua) || (/Mac/.test(navigator.platform||'') && navigator.maxTouchPoints > 1);
+}
+/* fonts.ready pode nunca resolver (fonte bloqueada/arquivo local) — corre contra um limite */
+function fontsProntas(){
+  const t = new Promise(r => setTimeout(r, 1500));
+  const f = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  return Promise.race([f, t]);
+}
+/* entrega o blob: baixa no desktop, abre em aba nova no iOS */
+function entregar(blob, filename, janelaPre){
+  const url = URL.createObjectURL(blob);
+  if(janelaPre){                       // aba já aberta no gesto (iOS)
+    janelaPre.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 15000);
+    return true;                        // abriu
+  }
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+  return false;                         // baixou
+}
+function blobPNG(cv){ return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('canvas vazio')), 'image/png')); }
+function blobPDF(cv){
+  const jpeg = cv.toDataURL('image/jpeg', 0.92).split(',')[1];
+  const bin = atob(jpeg);
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return montarPDF(bytes, cv.width, cv.height);
+}
+function blobBase64(blob){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+function registrarProposta(url){
+  const t = totais();
+  srv('propostaRegistrar', {
+    numero: estado.numero, emitida: hojeISO(), cliente: estado.cliente, zap: estado.zap, tema: estado.tema,
+    data: estado.data, modalidade: ehMontado() ? 'Montada' : 'Pegue e Monte',
+    kit: estado.kit ? estado.kit.nome : '', total: t.total, sinal: t.sinal, restante: t.restante, arquivo: url || ''
+  }).catch(e => console.error(e));
+}
+/* gera o arquivo, baixa no aparelho (fora do iOS), salva no Drive e registra na aba Propostas */
+function exportar(tipo){
+  coletar();
+  avisar(tipo === 'pdf' ? 'Gerando PDF…' : 'Gerando imagem…');
+  const win = ehIOS() ? window.open('', '_blank') : null;   // iOS: a aba precisa abrir no toque
+  garantirNumero()
+    .then(() => fontsProntas())
+    .then(() => layoutParaCanvas(montarLayout()))
+    .then(cv => tipo === 'pdf' ? blobPDF(cv) : blobPNG(cv))
+    .then(blob => {
+      const nome = nomeArquivo(tipo);
+      if(!win) entregar(blob, nome, null);
+      toast('Salvando no Drive…', 6000);
+      return blobBase64(blob)
+        .then(b64 => srv('salvarArquivoProposta', nome, b64, blob.type))
+        .then(arq => {
+          if(win) win.location.href = arq.url;
+          registrarProposta(arq.url);
+          toast((win ? 'Aberto' : 'Baixado') + ' e salvo no Drive ✓ <a href="' + esc(arq.url) + '" target="_blank" rel="noopener">abrir</a>', 6000, true);
+        })
+        .catch(e => {
+          console.error(e);
+          if(win) entregar(blob, nome, win);
+          registrarProposta('');
+          toast('Gerado, mas não salvou no Drive: ' + (e.message || e), 6000);
+        });
+    })
+    .catch(err => { if(win) win.close(); avisar('Erro ao gerar arquivo'); console.error(err); });
+}
+function baixarPNG(){ exportar('png'); }
+function baixarPDF(){ exportar('pdf'); }
+
+/* monta um PDF mínimo (uma página) com a imagem JPEG embutida */
+function montarPDF(jpegBytes, iw, ih){
+  const pw = 595.28;                       // largura A4 em pt
+  const ph = pw * ih / iw;                 // altura proporcional à imagem
+  const enc = s => new TextEncoder().encode(s);
+  const partes = [];
+  const offsets = [];
+  let pos = 0;
+  const push = chunk => { partes.push(chunk); pos += chunk.length; };
+  const obj = (n, txt) => { offsets[n] = pos; push(enc(txt)); };
+
+  push(enc('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n'));
+  obj(1, '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  obj(2, '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+  obj(3, `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw.toFixed(2)} ${ph.toFixed(2)}] ` +
+         `/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
+  // objeto 4: imagem
+  offsets[4] = pos;
+  push(enc(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${iw} /Height ${ih} ` +
+           `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`));
+  push(jpegBytes);
+  push(enc('\nendstream\nendobj\n'));
+  // objeto 5: conteúdo (desenha a imagem cobrindo a página)
+  const cont = `q\n${pw.toFixed(2)} 0 0 ${ph.toFixed(2)} 0 0 cm\n/Im0 Do\nQ\n`;
+  obj(5, `5 0 obj\n<< /Length ${enc(cont).length} >>\nstream\n${cont}endstream\nendobj\n`);
+
+  const xrefPos = pos;
+  let xref = `xref\n0 6\n0000000000 65535 f \n`;
+  for(let i = 1; i <= 5; i++) xref += String(offsets[i]).padStart(10,'0') + ' 00000 n \n';
+  push(enc(xref));
+  push(enc(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`));
+
+  return new Blob(partes, {type:'application/pdf'});
+}
+
+/* ───── copiar texto p/ WhatsApp ───── */
+function textoWhatsApp(){
+  coletar();
+  const t = totais();
+  const L = [];
+  L.push('*GM CelebrArt · Proposta de Decoração*');
+  if(estado.cliente) L.push('Para: ' + estado.cliente);
+  if(estado.tema) L.push('Tema: ' + estado.tema);
+  const quem = [estado.aniv, estado.idade].filter(Boolean).join(' · ');
+  if(quem) L.push('Festa: ' + quem);
+  if(estado.data) L.push('Data: ' + dataBR(estado.data));
+  if(estado.local) L.push('Local: ' + estado.local);
+  L.push('');
+  if(estado.kit){
+    L.push('*Kit ' + estado.kit.nome + '* — ' + moeda(t.kit));
+    if(estado.kit.inclui && estado.kit.inclui.length)
+      L.push('Inclui: ' + estado.kit.inclui.join(', '));
+  }
+  estado.itens.forEach(i => L.push('• ' + i.desc + ' — ' + moeda(i.val)));
+  if(t.entrega > 0) L.push('• ' + (estado.entregaDesc||'Entrega') + ' — ' + moeda(t.entrega));
+  L.push('');
+  L.push('*Total: ' + moeda(t.total) + '*');
+  if(t.sinal > 0){
+    L.push('Sinal p/ reserva' + (t.pct!==null ? ' (' + t.pct + '%)' : '') + ': ' + moeda(t.sinal));
+    L.push('Valor restante: ' + moeda(t.restante));
+  }
+  if(estado.validade) L.push('');
+  if(estado.validade) L.push('_Proposta válida por ' + estado.validade + '._');
+  L.push('');
+  L.push(cfg('contato1_nome','Gabriel') + ' ' + cfg('contato1_tel','') + ' · ' + cfg('contato2_nome','Mayara') + ' ' + cfg('contato2_tel',''));
+  return L.join('\n');
+}
+$('bt-copiar').onclick = () => {
+  const txt = textoWhatsApp();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(() => avisar('Texto copiado ✓'),
+                                            () => copiaFallback(txt));
+  } else copiaFallback(txt);
+};
+function copiaFallback(txt){
+  const ta = document.createElement('textarea');
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); avisar('Texto copiado ✓'); }
+  catch(e){ avisar('Copie manualmente'); }
+  ta.remove();
+}
+
+/* ───── persistência + modelos ───── */
+let salvarTimer = null;
+function agendarSalvar(){ clearTimeout(salvarTimer); salvarTimer = setTimeout(() => {
+  if(!LSX.set('gm_prop_atual', JSON.stringify(estado)))
+    LSX.set('gm_prop_atual', JSON.stringify(Object.assign({}, estado, {img:null, imgW:null, imgH:null})));
+}, 600); }
+
+function novaProposta(silencioso){
+  estado = {
+    numero: '', cliente:'', zap:'', tema:'', aniv:'', idade:'', data:'', local:'',
+    kit:null, itens:[], entregaDesc:'Entrega e retirada', entregaVal:'',
+    sinal:SINAL_PADRAO, sinalTipo:'valor', modalidade:'montado', validade:VALIDADE_PADRAO,
+    obs:OBS_PADRAO.montado,
+    img:null, imgW:null, imgH:null, imgZoom:100, imgX:50, imgY:50
+  };
+  if(silencioso) return;
+  preencherForm(); atualizar();
+  avisar('Nova proposta');
+}
+
+/* modelos ficam na aba "Modelos" da planilha (sem a foto: a célula não comporta imagem) */
+function salvarModelo(){
+  coletar();
+  const nome = estado.cliente || estado.tema || 'Modelo';
+  const dados = JSON.parse(JSON.stringify(estado));
+  dados.img = null; dados.imgW = null; dados.imgH = null; dados.numero = '';
+  avisar('Salvando modelo…');
+  srv('modeloSalvar', nome, dados)
+    .then(() => avisar('Modelo salvo ✓' + (estado.img ? ' (sem a foto)' : '')))
+    .catch(e => avisar('Não salvou: ' + e.message));
+}
+function listarModelos(modelos){
+  const box = $('lista-modelos');
+  if(!modelos.length){ box.innerHTML = '<p style="color:#888;text-align:center;font-size:13.5px">Nenhum modelo salvo ainda.</p>'; return; }
+  box.innerHTML = modelos.map(m => `
+    <div class="modelo-linha" data-id="${esc(m.id)}">
+      <div class="nome">${esc(m.nome)}<small>${esc(m.dados.tema||'')} · ${esc(dataBR(m.em))}</small></div>
+      <button class="usar">Usar</button>
+      <button class="apagar" title="Apagar">🗑️</button>
+    </div>`).join('');
+  box.querySelectorAll('.usar').forEach(b => b.onclick = () => {
+    const m = modelos.find(x => x.id === b.closest('.modelo-linha').dataset.id);
+    if(!m) return;
+    novaProposta(true);
+    estado = Object.assign(estado, JSON.parse(JSON.stringify(m.dados)), {numero:'', img:null, imgW:null, imgH:null});
+    preencherForm(); atualizar();
+    $('veu-modelos').classList.remove('aberto');
+    avisar('Modelo carregado');
+  });
+  box.querySelectorAll('.apagar').forEach(b => b.onclick = () => {
+    if(!confirm('Apagar este modelo?')) return;
+    b.disabled = true;
+    srv('modeloApagar', b.closest('.modelo-linha').dataset.id).then(listarModelos)
+      .catch(e => { b.disabled = false; avisar('Não apagou: ' + e.message); });
+  });
+}
+function abrirModelos(){
+  $('lista-modelos').innerHTML = '<p style="color:#888;text-align:center;font-size:13.5px">Carregando…</p>';
+  $('veu-modelos').classList.add('aberto');
+  srv('modelosListar').then(listarModelos)
+    .catch(e => { $('lista-modelos').innerHTML = '<p style="color:#a33;text-align:center">' + esc(e.message) + '</p>'; });
+}
+
+/* ───── eventos ───── */
+// máscara de telefone enquanto digita
+$('f-zap').addEventListener('input', e => { e.target.value = mascaraTel(e.target.value); });
+// capitaliza nomes/tema/local ao sair do campo
+['f-cliente','f-aniv','f-local','f-tema'].forEach(id =>
+  $(id).addEventListener('blur', e => { e.target.value = capNome(e.target.value); atualizar(); }));
+
+ROOT.querySelectorAll('.coluna-form input, .coluna-form textarea').forEach(el =>
+  el.addEventListener('input', atualizar));
+
+$('f-sinal-tipo').addEventListener('change', atualizar);
+$('f-mod').addEventListener('change', () => {
+  const obsEl=$('f-obs'), atual=obsEl.value.trim();
+  const ehPadrao = atual===OBS_PADRAO.pm || atual===OBS_PADRAO.montado || atual===OBS_ANTIGA || !atual;
+  if(ehPadrao) obsEl.value = OBS_PADRAO[$('f-mod').value];   // só troca se você não personalizou
+  atualizar();
+});
+
+$('chips-kits').innerHTML = B.kits.map(k =>
+  `<button class="chip kit" data-kit="${esc(k.nome)}">${esc(k.nome)}${k.preco !== '' ? ' · ' + esc(k.preco) : ''}</button>`).join('');
+$('chips-extras').innerHTML = B.extras.map((e, i) =>
+  `<button class="chip" data-extra-i="${i}">+ ${esc(e.nome)} ${esc(e.preco)}</button>`).join('');
+$('temas').innerHTML = B.temas.map(t => `<option value="${esc(t.tema)}"></option>`).join('');
+ROOT.querySelectorAll('.chip.kit').forEach(c => c.onclick = () => escolherKit(c.dataset.kit));
+ROOT.querySelectorAll('.chip[data-extra-i]').forEach(c => c.onclick = () => {
+  const e = B.extras[+c.dataset.extraI];
+  addItem({desc: e.nome, val: e.preco, chk: e.chk});
+  atualizar();
+});
+$('bt-add-item').onclick = () => { addItem({desc:'',val:''}); };
+
+$('fmt').querySelectorAll('button').forEach(b => b.onclick = () => {
+  $('fmt').querySelectorAll('button').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel'); formato = b.dataset.fmt; atualizar();
+});
+
+$('bt-png').onclick = baixarPNG;
+$('bt-pdf').onclick = baixarPDF;
+$('bt-salvar-modelo').onclick = salvarModelo;
+$('bt-modelos').onclick = abrirModelos;
+$('bt-novo').onclick = () => novaProposta();
+$('fechar-modelos').onclick = () => $('veu-modelos').classList.remove('aberto');
+$('veu-modelos').onclick = e => { if(e.target.id === 'veu-modelos') e.currentTarget.classList.remove('aberto'); };
+
+/* ───── init ───── */
+$('logo-topo').src = LOGO_SRC;
+(function init(){
+  const salvo = LSX.get('gm_prop_atual');
+  if(salvo){
+    try{ estado = Object.assign(estado, JSON.parse(salvo)); }catch(e){}
+  }
+  if(!estado.sinalTipo) estado.sinalTipo='valor';
+  if(!estado.modalidade) estado.modalidade='montado';
+  if(estado.obs===OBS_ANTIGA) estado.obs=OBS_PADRAO[estado.modalidade];
+  preencherForm();
+  atualizar();
+})();
+
+
+
+/* ───── ponte com a Central ───── */
+function receberOrcamento(d){
+  coletar();
+  estado.kit = {
+    nome: d.kitNome || 'Personalizado',
+    val: d.valorKit ? String(d.valorKit) : '',
+    inclui: (d.itens || []).slice()
+  };
+  if(d.temAdesivo) estado.kit.inclui.push('Adesivo personalizado no tema');
+  if(d.modalidade){
+    const obsEraPadrao = !estado.obs || estado.obs===OBS_PADRAO.pm || estado.obs===OBS_PADRAO.montado || estado.obs===OBS_ANTIGA;
+    estado.modalidade = d.modalidade;
+    if(obsEraPadrao) estado.obs = OBS_PADRAO[d.modalidade];
+  }
+  if(d.servico){
+    estado.entregaDesc = ehMontado() ? 'Montagem, entrega e retirada' : 'Entrega e retirada';
+    estado.entregaVal = String(d.servico);
+  }
+  preencherForm(); atualizar();
+  avisar('Orçamento aplicado na proposta ✓');
+}
+function dadosParaContrato(){
+  coletar(); const t = totais();
+  return {
+    cliente: estado.cliente, zap: estado.zap, tema: estado.tema, data: estado.data, local: estado.local,
+    extrasDet: estado.itens.map(i => ({desc: i.desc, chk: i.chk || ''})).filter(i => i.desc),
+    kitNome: estado.kit ? (estado.kit.nome||'') : '',
+    kitInclui: estado.kit ? estado.kit.inclui.slice() : [],
+    extras: estado.itens.map(i => i.desc).filter(Boolean),
+    valKit: t.kit, valExtras: t.extras, valEntrega: t.entrega,
+    sinal: estado.sinal, sinalTipo: estado.sinalTipo, modalidade: estado.modalidade,
+    entregaDesc: estado.entregaDesc
+  };
+}
+function setLogo(url){ if(!url) return; LOGO_SRC = url; $('logo-topo').src = url; atualizar(); }
+window.PROP = { receberOrcamento, dadosParaContrato, setLogo };
+
+}
+</script>
+
+<script>
+/* ═══ ABA 3 · CONTRATO + CHECKLIST ═══ */
+
+/* ---------- LOGO SVG PADRÃO (recriação) ---------- */
+const LOGO_SVG = `
+<svg viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- balões -->
+  <ellipse cx="150" cy="34" rx="20" ry="25" fill="#aed4e6"/>
+  <ellipse cx="178" cy="40" rx="18" ry="23" fill="#e89ba0"/>
+  <path d="M150 59 q3 6 -1 12" stroke="#9ab" stroke-width="1.2" fill="none"/>
+  <path d="M178 63 q-3 6 1 12" stroke="#d99" stroke-width="1.2" fill="none"/>
+  <!-- caixa de presente -->
+  <rect x="108" y="78" width="44" height="34" rx="3" fill="#bcdcec"/>
+  <rect x="108" y="78" width="44" height="11" rx="2" fill="#a6cfe2"/>
+  <rect x="126" y="78" width="8" height="34" fill="#e89ba0"/>
+  <path d="M130 78 q-12 -10 -4 -2 q-10 -6 4 2 q14 -8 4 2 q8 -8 -4 2" fill="#e89ba0"/>
+  <circle cx="130" cy="78" r="4" fill="#d9787f"/>
+  <!-- letras G M -->
+  <text x="78" y="106" font-family="Georgia,serif" font-size="62" font-weight="700" fill="#2b3a67">G</text>
+  <text x="156" y="110" font-family="Georgia,serif" font-size="66" font-weight="700" fill="#e89ba0">M</text>
+  <!-- CELEBRART -->
+  <text x="130" y="138" text-anchor="middle" font-family="Georgia,serif" font-size="18" letter-spacing="3" font-weight="600">
+    <tspan fill="#2b3a67">CELEBR</tspan><tspan fill="#e89ba0">ART</tspan>
+  </text>
+</svg>`;
+
+/* ---------- LOGO DO CONTRATO: vem do Drive (Imagens/logo-contrato.*) ---------- */
+let LOGO_CONTRATO_HTML = LOGO_SVG;
+
+/* ---------- DADOS DO CATÁLOGO: preenchidos por initContrato() a partir da planilha ----------
+   CATALOGO[kit]     = { nome, preco, itens:[nomes no contrato] }       (abas Kits + ItensKit)
+   CHECKLIST_ITENS   = lista de peças do checklist                      (ItensKit, coluna A)
+   CHECKLIST_QTD[kit]= quantidade padrão de cada peça no kit            (ItensKit, colunas dos kits)
+   KIT_PERTENCE[kit] = índices das peças que fazem parte do kit (qtd>0) — o que estiver fora vira "extra"
+   EXTRAS            = itens extras do catálogo                         (aba Extras)
+   EXTRA_MAP[nome]   = índice da peça do checklist ligada ao extra */
+let CATALOGO = {}, CHECKLIST_ITENS = [], CHECKLIST_QTD = {}, KIT_PERTENCE = {}, EXTRAS = [], EXTRA_MAP = {};
+
+function idxChecklist(nome){
+  const n = String(nome||'').trim().toLowerCase();
+  return n ? CHECKLIST_ITENS.findIndex(x => x.toLowerCase() === n) : -1;
+}
+
+function initChecklistQtd(){
+  const wrap = $('chk_qtd_lista'); wrap.innerHTML='';
+  CHECKLIST_ITENS.forEach((nome,i)=>{
+    const row = document.createElement('div');
+    row.className = 'ckq-row';
+    row.innerHTML = `<span class="ckq-nome">${escHtml(nome)}</span>
+      <input type="number" id="ckq_${i}" value="0" min="0" oninput="onQtd(${i})">
+      <label class="ckq-extra" title="Marca X em Item Extra no checklist"><input type="checkbox" id="cke_${i}" onchange="render()"> extra</label>`;
+    wrap.appendChild(row);
+  });
+}
+function onQtd(i){
+  const q = Number($('ckq_'+i).value)||0;
+  const kitKey = $('sel-kit').value;
+  if(kitKey){
+    const base = KIT_PERTENCE[kitKey]||[];
+    $('cke_'+i).checked = (q>0 && !base.includes(i)); // fora do kit = extra automático
+  }
+  render();
+}
+function setChecklistQtd(kitKey){
+  const arr = CHECKLIST_QTD[kitKey]; if(!arr) return;
+  const base = KIT_PERTENCE[kitKey]||[];
+  CHECKLIST_ITENS.forEach((_,i)=>{
+    const q = i<arr.length ? arr[i] : 0;
+    if($('ckq_'+i)) $('ckq_'+i).value = q;
+    if($('cke_'+i)) $('cke_'+i).checked = (q>0 && !base.includes(i));
+  });
+}
+function carregarFoto(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { fotoManual = r.result; render(); };
+  r.readAsDataURL(f);
+}
+
+let fotoManual = null;
+/* fotos de montagem por tema+kit (enviadas pelo Gabriel, otimizadas ~520px) */
+function fotoAtual(){
+  if(fotoManual) return fotoManual;
+  const t = $('sel-tema').value, k = $('sel-kit').value;
+  const tk = APP.img.fotos[String(t||'').toLowerCase()]; if(!tk) return null;
+  return tk[String(k||'').toLowerCase()] || Object.values(tk)[0] || null;
+}
+
+function abrirExtras(){
+  const body = $('extras-body'); body.innerHTML='';
+  EXTRAS.forEach((e,i)=>{
+    const div = document.createElement('div');
+    div.className = 'extra-opt';
+    div.innerHTML = `<input type="checkbox" id="ex_${i}">
+      <div class="eo-info">
+        <div class="eo-nome">${escHtml(e.nome)}</div>
+        <div class="eo-desc">${escHtml(e.desc)}</div>
+        <div class="eo-preco">${money(e.preco)}</div>
+      </div>
+      <input type="number" class="eo-qtd" id="exq_${i}" value="1" min="1">`;
+    body.appendChild(div);
+  });
+  $('modal-extras').classList.add('show');
+}
+function fecharExtras(){ $('modal-extras').classList.remove('show'); }
+function confirmarExtras(){
+  let soma = 0;
+  EXTRAS.forEach((e,i)=>{
+    if($('ex_'+i).checked){
+      const q = Math.max(1, Number($('exq_'+i).value)||1);
+      const idx = EXTRA_MAP[e.nome];               // reflete no checklist
+      addItem(q>1 ? `${q}x ${e.nome}` : e.nome, true, false, idx!=null ? e.chk : '');   // entra no objeto do contrato
+      soma += e.preco * q;
+      if(idx!=null && $('ckq_'+idx)){
+        $('ckq_'+idx).value = (Number($('ckq_'+idx).value)||0) + q;
+        if($('cke_'+idx)) $('cke_'+idx).checked = true;
+      }
+    }
+  });
+  if(soma>0) $('v_extra').value = (Number($('v_extra').value)||0) + soma;
+  fecharExtras();
+  calc();
+}
+
+const $ = id => document.getElementById(id);
+
+/* ---------- ITENS DO KIT ---------- */
+function addItem(valor="", extra=true, doKit=false, chk=''){
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  if(doKit) row.dataset.kit = '1';
+  if(chk) row.dataset.chk = chk;     // já contado na quantidade do checklist: não duplica como item manual
+  row.innerHTML = `<input class="item-desc" type="text" value="${escHtml(valor)}" oninput="render()" onblur="this.value=ucFirst(this.value);render()" placeholder="Descrição do item">
+                   <label class="item-extra-lbl" title="Marcar X em Item Extra no checklist"><input type="checkbox" class="item-extra" ${extra?'checked':''} onchange="render()"> extra</label>
+                   <button class="btn-x" onclick="this.parentNode.remove();render()">×</button>`;
+  $('itens-lista').appendChild(row);
+}
+function getItens(){
+  return [...document.querySelectorAll('#itens-lista .item-desc')].map(i=>i.value.trim()).filter(Boolean);
+}
+function preencherCatalogo(){
+  const tema = $('sel-tema').value;
+  const kitKey = $('sel-kit').value;
+
+  // tema → campo do contrato
+  if(tema && tema!=='__custom__'){ $('c_tema').value = tema; render(); }
+  if(tema==='__custom__'){ $('c_tema').focus(); }
+
+  if(!kitKey) return;
+  if(kitKey==='__custom__'){
+    $('itens-lista').innerHTML='';
+    addItem('', true);
+    $('v_kit').value = 0;
+    CHECKLIST_ITENS.forEach((_,i)=>{ if($('ckq_'+i)) $('ckq_'+i).value=0; if($('cke_'+i)) $('cke_'+i).checked=false; });
+    $('kit-info').textContent = 'Kit personalizado: adicione os itens manualmente e ajuste as quantidades do checklist ao lado.';
+    calc();
+    return;
+  }
+  const kit = CATALOGO[kitKey];
+
+  // monta itens, ajustando a capa ao tema escolhido
+  const temaLabel = (tema && tema!=='__custom__') ? tema : ($('c_tema').value || '');
+  $('itens-lista').innerHTML='';
+  kit.itens.forEach(it=>{
+    let txt = it;
+    if(it==='Capas no tema' && temaLabel) txt = 'Capas no tema - '+temaLabel;
+    addItem(txt);
+  });
+
+  // valor do kit básico
+  $('v_kit').value = kit.preco;
+
+  // quantidades padrão do checklist
+  setChecklistQtd(kitKey);
+
+  $('kit-info').textContent = `Kit ${kit.nome} carregado: ${kit.itens.length} itens · ${money(kit.preco)}. Edite os itens ou valores se precisar.`;
+  calc();
+}
+
+/* ---------- VALORES ---------- */
+const money = n => 'R$' + (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function totalCalc(){
+  return (Number($('v_kit').value)||0)+(Number($('v_extra').value)||0)+(Number($('v_entrega').value)||0);
+}
+function calc(){ $('total-disp').textContent = money(totalCalc()); render(); }
+function sinalValor(){
+  const v = Number($('v_sinal').value)||0, tot = totalCalc();
+  const pct = $('v_sinal_tipo') && $('v_sinal_tipo').value==='pct';
+  const bruto = pct ? tot*Math.min(Math.max(v,0),100)/100 : v;
+  return Math.round(Math.min(Math.max(bruto,0),tot)*100)/100;
+}
+function sinalTexto(){
+  const pct = $('v_sinal_tipo') && $('v_sinal_tipo').value==='pct';
+  return money(sinalValor()) + (pct ? ' ('+(Number($('v_sinal').value)||0)+'%)' : '');
+}
+function trocarModalidade(){
+  const pm = $('c_mod').value==='pm';
+  const aba = document.getElementById('aba-contrato');
+  aba.classList.toggle('mod-pm', pm);
+  aba.classList.toggle('mod-montado', !pm);
+  $('c_sub').textContent = pm ? 'Pegue e Monte' : 'Decoração montada';
+  $('lbl_ini').textContent = pm ? 'Entrega / Retirada' : 'Montagem';
+  $('lbl_fim').textContent = pm ? 'Devolução / Retirada' : 'Desmontagem';
+  $('lbl_vkit').textContent = pm ? 'Kit básico' : 'Decoração';
+  $('lbl_vent').textContent = pm ? 'Entrega' : 'Montagem/frete';
+  $('p_entrega_compl').placeholder = pm ? 'às 09:30hrs na nossa sede' : 'às 09:30hrs no Clube Bosch';
+  $('p_devolucao_compl').placeholder = pm ? 'às 10hrs na nossa sede' : 'às 22hrs no Clube Bosch';
+  render();
+}
+
+/* ---------- DATA BR ---------- */
+function dataBR(iso){
+  if(!iso) return '';
+  const [a,m,d]=iso.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+/* ---------- CORRETOR AUTOMÁTICO ---------- */
+function ucFirst(s){
+  s = s.replace(/^\s+/,'');
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+function maskCpfCnpj(v){
+  v = v.replace(/\D/g,'');
+  if(v.length<=11){
+    v = v.slice(0,11);
+    return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  }
+  v = v.slice(0,14);
+  return v.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2');
+}
+function maskTel(v){
+  v = String(v||'').replace(/\D/g,'').slice(0,11);
+  if(!v) return '';   // antes devolvia "(" e o contrato saía 'Telefone: ('
+  if(v.length<=2)  return v.replace(/(\d{0,2})/,'($1');
+  if(v.length<=6)  return v.replace(/(\d{2})(\d{0,4})/,'($1) $2');
+  if(v.length<=10) return v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
+  return v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+}
+
+/* ---------- PERÍODO (data calendário + complemento) ---------- */
+function periodoTxt(dataId, complId){
+  const d = dataBR($(dataId).value);
+  const c = $(complId).value.trim();
+  if(d && c) return d+' '+c;
+  return d || c || '—';
+}
+
+/* ---------- DATA DO CONTRATO (calendário → dia/mês/ano) ---------- */
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function dataContratoPicker(){
+  const v = $('d_data').value; if(!v) return;
+  const [a,m,d] = v.split('-');
+  $('d_dia').value = String(Number(d));
+  $('d_mes').value = MESES[Number(m)-1];
+  $('d_ano').value = a;
+  render();
+}
+
+/* ---------- RENDER PREVIEW ---------- */
+function render(){
+  $('o_nome').textContent = $('c_nome').value || '—';
+  $('o_end').textContent  = $('c_end').value  || '—';
+  $('o_num').textContent  = $('c_num').value  || '—';
+  $('o_cpf').textContent  = $('c_cpf').value  || '—';
+  $('o_tel').textContent  = $('c_tel').value  || '—';
+  $('o_tipo').textContent = $('c_tipo').value || '—';
+  $('o_tema').textContent = $('c_tema').value || '—';
+  $('o_data').textContent = dataBR($('c_data').value) || '—';
+
+  const ul = $('o_itens'); ul.innerHTML='';
+  const itens = getItens();
+  (itens.length?itens:['—']).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li);});
+
+  $('o_entrega').textContent   = periodoTxt('p_entrega_data','p_entrega_compl');
+  $('o_devolucao').textContent = periodoTxt('p_devolucao_data','p_devolucao_compl');
+
+  $('o_kit').textContent   = money($('v_kit').value);
+  $('o_extra').textContent = money($('v_extra').value);
+  $('o_ent_v').textContent = money($('v_entrega').value);
+  $('o_total').textContent = money(totalCalc());
+  $('o_sinal').textContent = sinalTexto();
+  $('o_rest').textContent  = money(totalCalc() - sinalValor());
+  if($('sinal-info')) $('sinal-info').textContent = 'Sinal: '+money(sinalValor())+' · Valor restante: '+money(totalCalc() - sinalValor());
+  $('total-disp').textContent = money(totalCalc());
+
+  $('o_dia').textContent = $('d_dia').value || '___';
+  $('o_mes').textContent = $('d_mes').value || '_______';
+  $('o_ano').textContent = $('d_ano').value || '____';
+  $('o_ass').textContent = $('c_nome').value || '_______________';
+
+  renderChecklist();
+}
+
+/* itens digitados manualmente na lista (não pertencentes ao kit) → entram no checklist como extra */
+function normNome(s){ return s.toLowerCase().replace(/\(.*?\)/g,'').replace(/-/g,' ').replace(/\s+/g,' ').trim(); }
+function itensManuaisExtras(){
+  const conhecidos = new Set();
+  Object.values(CATALOGO).forEach(k=>k.itens.forEach(it=>conhecidos.add(normNome(it))));
+  CHECKLIST_ITENS.forEach(it=>conhecidos.add(normNome(it)));
+  EXTRAS.forEach(e=>conhecidos.add(normNome(e.nome)));
+  const out=[];
+  document.querySelectorAll('#itens-lista .item-row').forEach(row=>{
+    if(row.dataset.kit==='1' || row.dataset.chk) return;
+    const inp=row.querySelector('.item-desc'); if(!inp) return;
+    const txt=(inp.value||'').trim(); if(!txt) return;
+    let nome=txt, qtd=1;
+    const m=txt.match(/^(\d+)x\s+(.*)$/i);
+    if(m){ qtd=Number(m[1]); nome=m[2].trim(); }
+    const n=normNome(nome);
+    if(!n || n.startsWith('capas no tema') || conhecidos.has(n)) return;
+    const cb=row.querySelector('.item-extra');
+    out.push({nome, qtd, extra: cb ? cb.checked : true});
+  });
+  return out;
+}
+
+function renderChecklist(){
+  $('ck_nome').textContent   = $('c_nome').value   || '—';
+  $('ck_end').textContent    = $('c_end').value    || '—';
+  $('ck_num').textContent    = $('c_num').value    || '—';
+  $('ck_bairro').textContent = $('c_bairro').value || '—';
+  $('ck_tel').textContent    = $('c_tel').value    || '—';
+  $('ck_retirada').textContent = periodoTxt('p_entrega_data','p_entrega_compl');
+  $('ck_devol').textContent    = periodoTxt('p_devolucao_data','p_devolucao_compl');
+
+  const tema = ($('c_tema').value || '').toUpperCase();
+  const kitKey = $('sel-kit').value;
+  const kitNome = kitKey==='__custom__' ? 'PERSONALIZADO' : ((kitKey && CATALOGO[kitKey]) ? CATALOGO[kitKey].nome.toUpperCase() : '');
+  $('ck_titulo').textContent = tema + (kitNome ? (tema?' - ':'') + 'KIT ' + kitNome : '') || '—';
+
+  $('ck_vkit').textContent  = money($('v_kit').value);
+  $('ck_vent').textContent  = money($('v_entrega').value);
+  $('ck_sinal').textContent = sinalTexto();
+  $('ck_rest').textContent  = money(totalCalc() - sinalValor());
+  $('ck_pgto').textContent  = $('chk_pgto').value || '—';
+  $('ck_obs').textContent   = $('chk_obs').value || '';
+
+  const foto = fotoAtual();
+  $('ck_foto').innerHTML = foto ? `<img src="${foto}" alt="montagem">` : 'foto da montagem';
+
+  const tb = $('ck_tbody'); tb.innerHTML='';
+  CHECKLIST_ITENS.forEach((nome,i)=>{
+    const q = Number($('ckq_'+i) ? $('ckq_'+i).value : 0) || 0;
+    if(q<=0) return; // entra na lista só o que realmente vai
+    const ehExtra = $('cke_'+i) ? $('cke_'+i).checked : false;
+    const extraCell = ehExtra ? '<span class="chk-box marcado">✕</span>' : '<span class="chk-box"></span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${nome}</td><td class="c">${q}</td>
+      <td class="c">${extraCell}</td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>`;
+    tb.appendChild(tr);
+  });
+  // itens digitados manualmente na lista (fora do kit) entram como extra
+  itensManuaisExtras().forEach(({nome,qtd,extra})=>{
+    const tr = document.createElement('tr');
+    const extraCell = extra ? '<span class="chk-box marcado">✕</span>' : '<span class="chk-box"></span>';
+    tr.innerHTML = `<td>${nome}</td><td class="c">${qtd}</td>
+      <td class="c">${extraCell}</td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>`;
+    tb.appendChild(tr);
+  });
+  if(!tb.children.length){
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:16px">Defina as quantidades dos itens ao lado.</td></tr>';
+  }
+}
+
+/* ---------- LOGO (salva no Drive → vale para os dois aparelhos) ---------- */
+function setLogo(html){ ['logo-1','logo-2','logo-chk'].forEach(id=>{ if($(id)) $(id).innerHTML = html; }); }
+function setLogoContratoUrl(url){
+  LOGO_CONTRATO_HTML = url ? `<img src="${url}" alt="logo">` : LOGO_SVG;
+  setLogo(LOGO_CONTRATO_HTML);
+}
+function carregarLogo(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    setLogoContratoUrl(r.result);
+    toast('Salvando logo no Drive…', 5000);
+    srv('salvarImagem', 'logo-contrato', r.result)
+      .then(() => toast('Logo salva ✓'))
+      .catch(err => toast('Logo não salvou: ' + err.message, 5000));
+  };
+  r.readAsDataURL(f);
+}
+function removerLogo(){
+  if(!confirm('Remover a logo enviada e voltar para a padrão?')) return;
+  setLogoContratoUrl(null);
+  $('logo-file').value='';
+  srv('removerImagem', 'logo-contrato').then(() => toast('Logo removida')).catch(err => toast('Erro: ' + err.message));
+}
+function initLogo(){ setLogo(LOGO_CONTRATO_HTML); }
+
+/* ---------- PDF ---------- */
+function registrarContrato(){
+  const kitKey = $('sel-kit').value;
+  srv('contratoRegistrar', {
+    documento: 'Contrato', cliente: $('c_nome').value, cpf: $('c_cpf').value, tel: $('c_tel').value,
+    end: [$('c_end').value, $('c_num').value].filter(Boolean).join(', '), bairro: $('c_bairro').value,
+    tema: $('c_tema').value, kit: kitKey==='__custom__' ? 'Personalizado' : kitKey,
+    modalidade: $('c_mod').value==='pm' ? 'Pegue e Monte' : 'Montada',
+    data: $('c_data').value, inicio: periodoTxt('p_entrega_data','p_entrega_compl'),
+    fim: periodoTxt('p_devolucao_data','p_devolucao_compl'),
+    total: totalCalc(), sinal: sinalValor(), restante: totalCalc() - sinalValor()
+  }).catch(e => console.error(e));
+}
+function gerarPDF(modo){
+  const nome = ($('c_nome').value||'cliente').trim().replace(/\s+/g,'_');
+  const prefixo = modo==='checklist' ? 'Checklist_' : 'Contrato_';
+  const titulo = prefixo + 'GM_CelebrArt_' + nome;
+  render();
+  if(modo==='contrato') registrarContrato();
+
+  // 1) janela própria só com as páginas — dentro do Apps Script o print() da página inteira é instável
+  let w = null;
+  try { w = window.open('', '_blank'); if(w && !w.document) w = null; } catch(e){ w = null; }
+  if(w){
+    try{
+      const estilos = [...document.querySelectorAll('style')].map(s => s.outerHTML).join('');
+      const fontes = [...document.querySelectorAll('link[rel="stylesheet"]')].map(l => l.outerHTML).join('');
+      const aba = document.getElementById('aba-contrato').cloneNode(true);
+      aba.querySelectorAll('.painel, .mob-hint, .modal-bg').forEach(el => el.remove());
+      aba.classList.add('ativa');
+      const extra = '<style>'
+        + '#aba-contrato .app{display:block}'
+        + 'body.modo-contrato #aba-contrato .pagina-checklist{display:none}'
+        + 'body.modo-checklist #aba-contrato .pagina:not(.pagina-checklist){display:none}'
+        + '.barra-print{position:sticky;top:0;z-index:9;display:flex;gap:10px;justify-content:center;padding:10px;background:#2b3a67}'
+        + '.barra-print button{padding:10px 18px;border:none;border-radius:10px;font:600 15px Quicksand,sans-serif;background:#fff;color:#2b3a67}'
+        + '@media print{.barra-print{display:none}}'
+        + '</style>';
+      const barra = '<div class="barra-print"><button onclick="window.print()">🖨 Imprimir / Salvar PDF</button>'
+        + '<button onclick="window.close()">Fechar</button></div>';
+      w.document.open();
+      w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+        + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        + '<title>' + escHtml(titulo) + '</title>' + fontes + estilos + extra + '</head>'
+        + '<body class="modo-' + modo + '">' + barra + aba.outerHTML
+        + '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},500);});<\/script>'
+        + '</body></html>');
+      w.document.close();
+      return;
+    }catch(err){ console.error('janela de impressão falhou', err); try{ w.close(); }catch(_){} }
+  }
+
+  // 2) alternativa: imprime a própria página (comportamento antigo)
+  const tmp = document.title;
+  document.body.classList.remove('modo-contrato','modo-checklist');
+  document.body.classList.add('modo-'+modo);
+  document.title = titulo;
+  let limpo = false;
+  const restaurar = () => {
+    if(limpo) return; limpo = true;
+    document.title = tmp;
+    document.body.classList.remove('modo-'+modo);
+    window.removeEventListener('afterprint', restaurar);
+  };
+  window.addEventListener('afterprint', restaurar);
+  setTimeout(() => {
+    try { window.print(); }
+    catch(err){ console.error('print falhou', err); }
+    setTimeout(restaurar, 3000);
+  }, 200);
+}
+
+/* ---------- LIMPAR ---------- */
+function limparTudo(){
+  ['c_nome','c_end','c_num','c_bairro','c_cpf','c_tel','c_data','c_tipo','c_tema','p_entrega_data','p_entrega_compl','p_devolucao_data','p_devolucao_compl','d_data','d_dia','d_mes','chk_obs'].forEach(i=>$(i).value='');
+  $('sel-tema').value=''; $('sel-kit').value='';
+  $('v_kit').value=0; $('v_extra').value=0; $('v_entrega').value=0; $('v_sinal').value=Number(cfg('sinal_padrao',50))||0; $('v_sinal_tipo').value='valor';
+  $('chk_pgto').value='Pix';
+  fotoManual=null;
+  $('chk_foto').value='';
+  $('ck_foto').innerHTML='foto da montagem';
+  CHECKLIST_ITENS.forEach((_,i)=>{ if($('ckq_'+i)) $('ckq_'+i).value=0; if($('cke_'+i)) $('cke_'+i).checked=false; });
+  $('kit-info').textContent='Selecione tema e kit para preencher os itens e o valor automaticamente. Depois você pode editar à vontade.';
+  $('itens-lista').innerHTML=''; addItem();
+  dataContratoHoje();
+  render();
+}
+
+/* data do contrato começa em hoje (antes o ano era fixo em 2026 e dia/mês vazios) */
+function dataContratoHoje(){ $('d_data').value = hojeISO(); dataContratoPicker(); }
+
+/* ---------- INIT (chamado por JsApp depois de ler a planilha) ---------- */
+function initContrato(B){
+  // catálogo de kits: só os kits que têm coluna em ItensKit com alguma peça
+  const preco = {}; B.kits.forEach(k => { preco[k.nome] = k.preco; });
+  CHECKLIST_ITENS = B.itensKit.map(r => r.item);
+  CATALOGO = {}; CHECKLIST_QTD = {}; KIT_PERTENCE = {};
+  B.kitCols.forEach(k => {
+    const qtd = B.itensKit.map(r => r.qtd[k] || 0);
+    if(!qtd.some(q => q > 0)) return;
+    CHECKLIST_QTD[k] = qtd;
+    KIT_PERTENCE[k] = qtd.map((q,i) => q > 0 ? i : -1).filter(i => i >= 0);
+    CATALOGO[k] = { nome: k, preco: Number(preco[k]) || 0,
+      itens: B.itensKit.filter(r => r.contrato && (r.qtd[k]||0) > 0).map(r => r.contrato) };
+  });
+  EXTRAS = B.extras.slice();
+  EXTRA_MAP = {};
+  EXTRAS.forEach(e => { const i = idxChecklist(e.chk); if(i >= 0) EXTRA_MAP[e.nome] = i; });
+
+  $('sel-tema').innerHTML = '<option value="">— selecione —</option>'
+    + B.temas.map(t => `<option value="${escHtml(t.tema)}">${escHtml((t.emoji ? t.emoji + ' ' : '') + t.tema)}</option>`).join('')
+    + '<option value="__custom__">✎ Outro (manual)</option>';
+  $('sel-kit').innerHTML = '<option value="">— selecione —</option>'
+    + Object.values(CATALOGO).map(k => `<option value="${escHtml(k.nome)}">${escHtml(k.nome)} · ${money(k.preco)}</option>`).join('')
+    + '<option value="__custom__">✎ Personalizado</option>';
+
+  // dados da empresa vindos da aba Config
+  ['empresa','endereco','numero','contato1_tel','contato2_tel','cidade'].forEach(k =>
+    document.querySelectorAll('#aba-contrato .cfg-' + k).forEach(el => { el.textContent = cfg(k, el.textContent); }));
+  document.querySelectorAll('#aba-contrato .cfg-multa').forEach(el => { el.textContent = money(cfg('multa_atraso', 20)); });
+  $('v_sinal').value = Number(cfg('sinal_padrao', 50)) || 0;
+
+  /* ---------- INIT / LISTENERS ---------- */
+  const SKIP = ['logo-file','c_cpf','c_tel'];
+  document.querySelectorAll('#aba-contrato input,#aba-contrato textarea').forEach(el=>{
+    if(el.type==='file') return;
+    if(SKIP.includes(el.id)) return;
+    el.addEventListener('input', render);
+  });
+
+  // máscaras em tempo real
+  $('c_cpf').addEventListener('input', e=>{ e.target.value = maskCpfCnpj(e.target.value); render(); });
+  $('c_tel').addEventListener('input', e=>{ e.target.value = maskTel(e.target.value); render(); });
+
+  // corretor (Title Case) ao sair do campo
+  ['c_nome','c_end','c_bairro','c_tipo','c_tema'].forEach(id=>{
+    $(id).addEventListener('blur', e=>{ e.target.value = titleCasePT(e.target.value); render(); });
+  });
+
+
+
+  initLogo();
+  initChecklistQtd();
+  addItem();
+  dataContratoHoje();
+  trocarModalidade();
+}
+</script>
+
+<script>
+/* ═══ SHELL: abas, carregamento da planilha e pontes entre as abas ═══ */
+(function () {
+  document.addEventListener('touchstart', function () {}, { passive: true });   // iOS: click confiável em li/div
+  const abas = ['orcamento', 'proposta', 'contrato'];
+  const secs = {}, tabs = {};
+  abas.forEach(a => {
+    secs[a] = document.getElementById('aba-' + a);
+    tabs[a] = document.querySelector('.shell-tab[data-aba="' + a + '"]');
+  });
+  function ir(a) {
+    abas.forEach(x => { secs[x].classList.toggle('ativa', x === a); tabs[x].classList.toggle('sel', x === a); });
+    window.scrollTo({ top: 0 });
+    window.dispatchEvent(new Event('resize'));
+  }
+  document.querySelectorAll('.shell-tab').forEach(t => t.onclick = () => ir(t.dataset.aba));
+
+  /* Orçamento → Proposta */
+  document.getElementById('orc-para-proposta').onclick = () => {
+    window.PROP.receberOrcamento(window.ORC.dados());
+    ir('proposta');
+  };
+
+  /* Proposta → Contrato */
+  document.getElementById('bt-gerar-contrato').onclick = () => {
+    const d = window.PROP.dadosParaContrato();
+    const g = id => document.getElementById(id);
+    const B = APP.boot;
+    g('c_nome').value = titleCasePT(d.cliente || '');
+    g('c_tel').value = maskTel(d.zap || '');
+    g('c_tema').value = titleCasePT(d.tema || '');
+    if (d.data) g('c_data').value = d.data;
+    const montado = d.modalidade !== 'pm';
+    g('c_mod').value = montado ? 'montado' : 'pm';
+
+    // datas e local do período: só preenche o que estiver vazio
+    if (d.data) {
+      if (!g('p_entrega_data').value) g('p_entrega_data').value = d.data;
+      if (montado && !g('p_devolucao_data').value) g('p_devolucao_data').value = d.data;
+    }
+    if (d.local && montado) {
+      if (!g('p_entrega_compl').value) g('p_entrega_compl').value = 'no(a) ' + d.local;
+      if (!g('p_devolucao_compl').value) g('p_devolucao_compl').value = 'no(a) ' + d.local;
+    }
+
+    // kit do catálogo (Bronze/Prata/Ouro…): aceita "Ouro" ou "Kit Ouro"
+    const nomeKit = String(d.kitNome || '').trim().toLowerCase().replace(/^kit\s+/, '');
+    const kitKey = Object.keys(CATALOGO).find(k => k.toLowerCase() === nomeKit) || '';
+    g('sel-kit').value = kitKey;
+    const temaOpt = [...g('sel-tema').options].find(o => o.value && o.value.toLowerCase() === String(d.tema || '').trim().toLowerCase());
+    g('sel-tema').value = temaOpt ? temaOpt.value : '';
+
+    initChecklistQtd();
+    if (kitKey) {
+      setChecklistQtd(kitKey);
+      // peças que foram tiradas do kit na proposta saem também do checklist
+      const incl = d.kitInclui.map(x => x.toLowerCase());
+      (KIT_PERTENCE[kitKey] || []).forEach(i => {
+        const nomeContrato = (B.itensKit[i] && B.itensKit[i].contrato || '').toLowerCase();
+        if (nomeContrato && incl.indexOf(nomeContrato) < 0 && g('ckq_' + i)) g('ckq_' + i).value = 0;
+      });
+    }
+
+    const temaTxt = g('c_tema').value;
+    const doCatalogo = kitKey ? CATALOGO[kitKey].itens.map(x => x.toLowerCase()) : [];
+    g('itens-lista').innerHTML = '';
+    d.kitInclui.forEach(n => {
+      const ehDoKit = doCatalogo.indexOf(n.toLowerCase()) >= 0;
+      const txt = (/^capas no tema$/i.test(n) && temaTxt) ? 'Capas no tema - ' + temaTxt : n;
+      addItem(txt, false, ehDoKit);       // faz parte da decoração: não é extra
+    });
+
+    // extras cobrados à parte: os ligados a uma peça do checklist somam na quantidade (antes sumiam)
+    (d.extrasDet || []).forEach(x => {
+      const i = idxChecklist(x.chk);
+      if (i >= 0 && g('ckq_' + i)) {
+        const m = x.desc.match(/^(\d+)\s*x\s+/i);
+        g('ckq_' + i).value = (Number(g('ckq_' + i).value) || 0) + (m ? Number(m[1]) : 1);
+        g('cke_' + i).checked = true;
+        addItem(x.desc, true, false, x.chk);
+      } else addItem(x.desc, true);
+    });
+    if (!d.kitInclui.length && !(d.extrasDet || []).length) addItem();
+
+    g('v_kit').value = d.valKit || 0;
+    g('v_extra').value = d.valExtras || 0;
+    g('v_entrega').value = d.valEntrega || 0;
+    g('v_sinal').value = d.sinal || 0;
+    g('v_sinal_tipo').value = d.sinalTipo === 'pct' ? 'pct' : 'valor';
+    g('kit-info').textContent = kitKey
+      ? 'Kit ' + kitKey + ' veio da proposta. Quantidades do checklist preenchidas.'
+      : 'Itens vieram da proposta.';
+    trocarModalidade();
+    calc();
+    ir('contrato');
+  };
+
+  /* ── carregamento ── */
+  const tela = document.getElementById('carregando');
+  const msg = document.getElementById('carregando-msg');
+  function erro(e) {
+    tela.classList.add('erro');
+    msg.innerHTML = 'Não consegui carregar: ' + escHtml(e && e.message || e)
+      + '<br><br><button onclick="location.reload()" style="padding:10px 18px;border:none;border-radius:10px;background:#c9607c;color:#fff;font:500 14px Jost,sans-serif">Tentar de novo</button>';
+    console.error(e);
+  }
+  function carregarImagens() {
+    srv('getImagens').then(img => {
+      APP.img = img;
+      if (img.logo) window.PROP.setLogo(img.logo);
+      if (img.logoContrato) setLogoContratoUrl(img.logoContrato);
+      render();     // foto da montagem no checklist
+    }).catch(e => { console.error(e); toast('Imagens não carregaram: ' + e.message, 5000); });
+  }
+
+  /* ── PIN: guardado só neste aparelho ── */
+  const pinBox = document.getElementById('pin-box');
+  function pedirPin(aviso) {
+    tela.classList.remove('erro');
+    document.querySelector('#carregando .giro').style.display = 'none';
+    msg.textContent = aviso || 'Digite o PIN de acesso';
+    pinBox.style.display = 'flex';
+    document.getElementById('pin-nome').value = LSX.get('gm_quem') || '';
+    document.getElementById('pin-cod').focus();
+  }
+  function entrar() {
+    APP.pin = document.getElementById('pin-cod').value.trim();
+    APP.quem = document.getElementById('pin-nome').value.trim();
+    if (!APP.pin) return;
+    pinBox.style.display = 'none';
+    document.querySelector('#carregando .giro').style.display = '';
+    msg.textContent = 'Carregando dados da planilha…';
+    carregar();
+  }
+  document.getElementById('pin-ok').onclick = entrar;
+  document.getElementById('pin-cod').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+
+  function carregar() {
+    srv('getBoot').then(B => {
+      LSX.set('gm_pin', APP.pin); LSX.set('gm_quem', APP.quem);
+      APP.boot = B;
+      initOrcamento(B);
+      initProposta(B);
+      initContrato(B);
+      tela.classList.add('some');
+      ir('orcamento');
+      carregarImagens();
+    }).catch(e => {
+      const m = String(e && e.message || e);
+      if (m.indexOf('PIN_INVALIDO') >= 0) { LSX.del('gm_pin'); pedirPin('PIN incorreto. Tente de novo.'); }
+      else if (m.indexOf('PIN_BLOQUEADO') >= 0) pedirPin('Muitas tentativas. Aguarde 10 minutos.');
+      else erro(e);
+    });
+  }
+
+  const salvo = LSX.get('gm_pin');
+  if (salvo) { APP.pin = salvo; APP.quem = LSX.get('gm_quem') || ''; carregar(); }
+  else pedirPin();
+})();
+</script>
+
+</body>
+</html>

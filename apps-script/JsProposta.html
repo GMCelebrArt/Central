@@ -1,0 +1,942 @@
+<script>
+/* ═══ ABA 2 · PROPOSTA ═══ */
+function initProposta(B){
+
+/* ╔═══════════════════════════════════════════════╗
+   ║  GM CelebrArt · Gerador de Propostas           ║
+   ╚═══════════════════════════════════════════════╝ */
+/* logo: vem do Drive (pasta Imagens/logo.*); enquanto não chega, usa a logo desenhada */
+let LOGO_SRC = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LOGO_SVG.trim());
+const $ = id => document.getElementById(id);
+const ROOT = document.getElementById('aba-proposta');
+
+/* kits: aba "Kits" (preço) + aba "ItensKit" (o que vem em cada kit) */
+const KITS = {};
+B.kits.forEach(k => {
+  KITS[k.nome] = {
+    v: k.preco === '' ? '' : k.preco,
+    inclui: B.itensKit.filter(r => r.contrato && (r.qtd[k.nome] || 0) > 0).map(r => r.contrato)
+  };
+});
+const SINAL_PADRAO = String(cfg('sinal_padrao', 50));
+const VALIDADE_PADRAO = String(cfg('validade_padrao', '7 dias'));
+
+let estado = {
+  numero:'', cliente:'', zap:'', tema:'', aniv:'', idade:'', data:'', local:'',
+  kit:null,                    // { nome, val, inclui:[...] }
+  itens:[],                    // extras cobrados à parte
+  entregaDesc:'Entrega e retirada', entregaVal:'',
+  sinal:SINAL_PADRAO, sinalTipo:'valor', modalidade:'montado', validade:VALIDADE_PADRAO,
+  obs:'Reserva garantida mediante pagamento do sinal. Valor restante pago até o dia do evento, antes da montagem. Montagem e desmontagem feitas pela nossa equipe.',
+  img:null, imgW:null, imgH:null, imgZoom:100, imgX:50, imgY:50
+};
+const OBS_PADRAO={ pm:'Reserva garantida mediante pagamento do sinal. Valor restante pago na retirada do kit. Itens devolvidos limpos e sem danos.', montado:'Reserva garantida mediante pagamento do sinal. Valor restante pago até o dia do evento, antes da montagem. Montagem e desmontagem feitas pela nossa equipe.' };
+const OBS_ANTIGA='Reserva garantida mediante sinal de R$50. Valor restante pago na retirada do kit. Itens devolvidos limpos e sem danos.';
+const ehMontado=()=>estado.modalidade!=='pm';
+let formato = 'retrato';
+const FORMATOS = { retrato:[1240,1754], quadrado:[1240,1240], stories:[1080,1920] };
+
+/* ───── helpers ───── */
+function moeda(n){
+  n = +n || 0;
+  return 'R$ ' + n.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+const esc = escHtml;                 // agora também escapa aspas (bug: aspas quebravam value="…")
+const capNome = titleCasePT;         // mesma regra do contrato ("Ana da Silva")
+function mascaraTel(v){
+  const d = (v||'').replace(/\D/g,'').slice(0,11);
+  if(!d) return '';
+  if(d.length <= 2) return '(' + d;
+  if(d.length <= 6) return '(' + d.slice(0,2) + ') ' + d.slice(2);
+  if(d.length <= 10) return '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+  return '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+}
+function dataBR(iso){
+  if(!iso) return '';
+  const [a,m,d] = iso.split('-'); if(!d) return iso;
+  return `${d}/${m}/${a}`;
+}
+function avisar(t){
+  const a = $('aviso'); a.textContent = t; a.classList.add('ver');
+  clearTimeout(avisar._t); avisar._t = setTimeout(() => a.classList.remove('ver'), 2200);
+}
+function quebrar(texto, max){
+  const palavras = (texto || '').split(/\s+/);
+  const linhas = []; let atual = '';
+  for(const p of palavras){
+    if((atual + ' ' + p).trim().length > max){ if(atual) linhas.push(atual); atual = p; }
+    else atual = (atual + ' ' + p).trim();
+  }
+  if(atual) linhas.push(atual);
+  return linhas.length ? linhas : [''];
+}
+
+/* ───── número automático ─────
+   Antes: o contador local nunca avançava e toda proposta saía com o mesmo número.
+   Agora: o servidor reserva AAMM-NN (único entre aparelhos) na hora de gerar o PDF/PNG. */
+function garantirNumero(){
+  coletar();
+  if(estado.numero) return Promise.resolve(estado.numero);
+  return srv('propostaReservarNumero').then(n => {
+    estado.numero = n; $('f-numero').value = n; atualizar(); return n;
+  }).catch(e => { console.error(e); return ''; });
+}
+
+/* ───── coletar formulário → estado ───── */
+function coletar(){
+  estado.numero = $('f-numero').value.trim();
+  estado.cliente = $('f-cliente').value.trim();
+  estado.zap = $('f-zap').value.trim();
+  estado.tema = $('f-tema').value.trim();
+  estado.aniv = $('f-aniv').value.trim();
+  estado.idade = $('f-idade').value.trim();
+  estado.data = $('f-data').value;
+  estado.local = $('f-local').value.trim();
+  estado.entregaDesc = $('f-entrega-desc').value.trim();
+  estado.entregaVal = $('f-entrega-val').value;
+  estado.sinal = $('f-sinal').value;
+  estado.sinalTipo = $('f-sinal-tipo').value;
+  estado.modalidade = $('f-mod').value;
+  estado.validade = $('f-validade').value.trim();
+  estado.obs = $('f-obs').value.trim();
+  estado.itens = [...ROOT.querySelectorAll('#lista-itens .item')].map(el => ({
+    desc: el.querySelector('.desc').value.trim(),
+    val: el.querySelector('.val').value,
+    chk: el.dataset.chk || ''          // liga o extra ao item do checklist do contrato
+  })).filter(i => i.desc || i.val);
+  // kit: valor e itens inclusos marcados
+  if(estado.kit){
+    const nEl = ROOT.querySelector('.kit-nome-inp');
+    if(nEl) estado.kit.nome = nEl.value.trim();
+    const vEl = ROOT.querySelector('.kit-val');
+    if(vEl) estado.kit.val = vEl.value;
+    const incs = [...ROOT.querySelectorAll('.incluso-chips .inc')];
+    if(incs.length) estado.kit.inclui = incs.filter(c => !c.classList.contains('off')).map(c => c.dataset.nome);
+  }
+}
+
+function preencherForm(){
+  $('f-numero').value = estado.numero;
+  $('f-cliente').value = estado.cliente;
+  $('f-zap').value = estado.zap;
+  $('f-tema').value = estado.tema;
+  $('f-aniv').value = estado.aniv;
+  $('f-idade').value = estado.idade;
+  $('f-data').value = estado.data;
+  $('f-local').value = estado.local;
+  $('f-entrega-desc').value = estado.entregaDesc;
+  $('f-entrega-val').value = estado.entregaVal;
+  $('f-sinal').value = estado.sinal;
+  $('f-sinal-tipo').value = estado.sinalTipo==='pct'?'pct':'valor';
+  $('f-mod').value = estado.modalidade==='pm'?'pm':'montado';
+  $('f-validade').value = estado.validade;
+  $('f-obs').value = estado.obs;
+  $('lista-itens').innerHTML = '';
+  estado.itens.forEach(addItem);
+  renderKit();
+  renderImagem();
+}
+
+/* ───── kit base ───── */
+function escolherKit(nome){
+  // mantém o valor já digitado se for o mesmo kit; senão usa o padrão
+  const mesmo = estado.kit && estado.kit.nome === nome;
+  estado.kit = {
+    nome,
+    val: mesmo ? estado.kit.val : KITS[nome].v,
+    inclui: KITS[nome].inclui.slice()
+  };
+  renderKit(); atualizar();
+}
+function renderKit(){
+  const box = $('bloco-kit');
+  ROOT.querySelectorAll('.chip.kit').forEach(c =>
+    c.classList.toggle('sel', estado.kit && c.dataset.kit === estado.kit.nome));
+  if(!estado.kit){ box.innerHTML = ''; return; }
+  const k = estado.kit;
+  const padrao = KITS[k.nome] ? KITS[k.nome].inclui : [];
+  // une itens padrão (marcados/desmarcados) + personalizados que ele adicionou
+  const personalizados = k.inclui.filter(i => !padrao.includes(i));
+  const lista = padrao.concat(personalizados);
+  box.innerHTML = `
+    <div class="kit-box">
+      <div class="kit-cab">
+        <input class="kit-nome-inp" value="${esc(k.nome)}" placeholder="Nome do kit" maxlength="28">
+        <input class="kit-val" type="number" inputmode="decimal" placeholder="0" value="${k.val}">
+        <button class="kit-rem" title="Remover kit">×</button>
+      </div>
+      <div class="kit-sub">O QUE VEM NO KIT — toque para tirar:</div>
+      <div class="incluso-chips">
+        ${lista.map(nome => `<button class="inc${k.inclui.includes(nome)?'':' off'}" data-nome="${esc(nome)}">${esc(nome)}</button>`).join('')}
+      </div>
+      <div class="add-inc">
+        <input id="inp-inc" placeholder="${lista.length ? 'Incluir outro item no kit' : 'Adicionar item ao kit'}" maxlength="40">
+        <button id="bt-add-inc" title="Adicionar">+</button>
+      </div>
+    </div>`;
+  box.querySelector('.kit-rem').onclick = () => { estado.kit = null; renderKit(); atualizar(); };
+  box.querySelector('.kit-val').addEventListener('input', atualizar);
+  box.querySelector('.kit-nome-inp').addEventListener('input', e => { estado.kit.nome = e.target.value; atualizar(); });
+  box.querySelectorAll('.inc').forEach(c => c.onclick = () => { c.classList.toggle('off'); atualizar(); });
+  const addInc = () => {
+    const inp = $('inp-inc'); const v = inp.value.trim();
+    if(!v) return;
+    if(!estado.kit.inclui.includes(v)) estado.kit.inclui.push(v);
+    inp.value = ''; renderKit(); atualizar();
+  };
+  box.querySelector('#bt-add-inc').onclick = addInc;
+  box.querySelector('#inp-inc').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); addInc(); } });
+}
+
+/* ───── itens extras ───── */
+function addItem(item){
+  const div = document.createElement('div');
+  div.className = 'item';
+  div.dataset.chk = (item && item.chk) || '';
+  div.innerHTML = `
+    <input type="text" class="desc" placeholder="Descrição do item" value="${esc(item&&item.desc||'')}">
+    <input type="number" class="val" placeholder="0" inputmode="decimal" value="${esc(item&&item.val||'')}">
+    <button class="rem" title="Remover">×</button>`;
+  div.querySelector('.rem').onclick = () => { div.remove(); atualizar(); };
+  div.querySelectorAll('input').forEach(i => i.addEventListener('input', atualizar));
+  $('lista-itens').appendChild(div);
+}
+
+/* ───── totais ───── */
+function totais(){
+  const kit = estado.kit ? (+estado.kit.val || 0) : 0;
+  const extras = estado.itens.reduce((s,i) => s + (+i.val || 0), 0);
+  const entrega = +estado.entregaVal || 0;
+  const total = kit + extras + entrega;
+  const sv = +estado.sinal || 0;
+  const pct = estado.sinalTipo==='pct' ? Math.min(Math.max(sv,0),100) : null;
+  const bruto = pct!==null ? total*pct/100 : sv;
+  const sinal = Math.round(Math.min(Math.max(bruto,0), total)*100)/100;
+  return { kit, extras, entrega, total, sinal, pct, restante: Math.round((total - sinal)*100)/100 };
+}
+
+/* ───── render do SVG da proposta ───── */
+/* ───── layout da proposta em primitivas (fonte única p/ preview e export) ───── */
+function montarLayout(){
+  const [W] = FORMATOS[formato];
+  const M = 70, cw = W - M*2;
+  const t = totais();
+  const P = [];
+  let y = 0;
+
+  // tamanhos: títulos 11pt (~23px) e textos 8,5pt (~18px), na escala da página
+  const TIT = 23, TXT = 18;
+
+  const txt = (str, x, yy, opt={}) => P.push({t:'text', str:String(str==null?'':str), x, y:yy,
+    s:opt.s||TXT, serif:!!opt.serif, w:opt.w||400, fill:opt.fill||'#2a2a2a', anchor:opt.anchor||'start', ls:opt.ls||0});
+  const rect = (x,yy,w,h,o={}) => P.push({t:'rect', x, y:yy, w, h, r:o.r||0, fill:o.fill||null, stroke:o.stroke||null, sw:o.sw||1});
+  const line = (x1,yy1,x2,yy2,stroke,sw=1) => P.push({t:'line', x1, y1:yy1, x2, y2:yy2, stroke, sw});
+  const img = (href,x,yy,w,h,fit,r=0,opt={}) => P.push(Object.assign({t:'img', href, x, y:yy, w, h, fit, r}, opt));
+
+  // largura de fonte para quebra de linha real (mede em px se houver canvas)
+  const fontSpec = (s, serif, w=400) => `${w} ${s}px ${serif?"'Cormorant Garamond', serif":"'Jost', sans-serif"}`;
+  const quebraPx = (texto, s) => quebrarLargura(texto, cw, fontSpec(s, false));
+
+  // ── cabeçalho centralizado ──
+  const cx0 = W/2;
+  y = 54;
+  const tamLogo = 132;
+  img(LOGO_SRC, cx0 - tamLogo/2, y, tamLogo, tamLogo, 'contain');
+  y += tamLogo + 30;
+  txt(ehMontado() ? 'DECORAÇÃO PERSONALIZADA · MONTAGEM COMPLETA' : 'DECORAÇÃO PERSONALIZADA · PEGUE E MONTE', cx0, y, {s:TXT, fill:'#c9607c', ls:3, anchor:'middle', w:500});
+  y += 34;
+  line(M, y, W-M, y, '#ece2d8', 2);
+  y += 46;
+  txt(ehMontado() ? 'PROPOSTA DE DECORAÇÃO' : 'PROPOSTA DE LOCAÇÃO', cx0, y, {s:TIT, fill:'#c9607c', ls:4, w:500, anchor:'middle'});
+  y += 30;
+  const linhaInfo = (estado.numero ? 'Nº ' + estado.numero + '   ·   ' : '') +
+                    'Emitida em ' + dataBR(hojeISO());
+  txt(linhaInfo, cx0, y, {s:TXT, fill:'#888', anchor:'middle'});
+
+  // ── card único: cliente + evento (linhas corridas) ──
+  y += 54;
+  {
+    const rows = [];
+    rows.push(['Cliente', estado.cliente || '—', estado.zap ? 'WhatsApp' : '', estado.zap || '']);
+    if(estado.tema || estado.data)
+      rows.push(['Tema', estado.tema || '—', estado.data ? 'Data' : '', estado.data ? dataBR(estado.data) : '']);
+    if(estado.local) rows.push(['Local', estado.local, '', '']);
+    const rowH = 34, h = 30 + 38 + rows.length*rowH;
+    rect(M, y, cw, h, {r:16, fill:'#fdfbf9', stroke:'#ece2d8', sw:1.5});
+    txt('CLIENTE / EVENTO', W/2, y+38, {serif:true, s:TIT, w:600, anchor:'middle'});
+    let yy = y + 38 + 42;
+    for(const [rl, vl, rr, vr] of rows){
+      txt(rl, M+30, yy, {s:TXT, fill:'#888'});
+      txt(vl, M+155, yy, {s:TXT, w:500});
+      if(rr){
+        txt(rr, M+cw*0.52, yy, {s:TXT, fill:'#888'});
+        txt(vr, M+cw*0.52+135, yy, {s:TXT, w:500});
+      }
+      yy += rowH;
+    }
+    y += h + 18;
+  }
+
+  // ── imagem opcional (inteira por padrão, menor e centralizada) ──
+  if(estado.img){
+    const iw = estado.imgW, ih = estado.imgH;
+    let dw, dh;
+    if(iw && ih){
+      const maxW = cw*0.78, maxH = cw*0.54, ar = iw/ih;
+      dw = maxW; dh = dw/ar;
+      if(dh > maxH){ dh = maxH; dw = dh*ar; }
+    } else { dw = cw*0.78; dh = cw*0.5; }
+    const bx = M + (cw - dw)/2;
+    img(estado.img, bx, y, dw, dh, 'crop', 16,
+        {zoom: estado.imgZoom||100, ox: estado.imgX??50, oy: estado.imgY??50, iw, ih});
+    rect(bx, y, dw, dh, {r:16, stroke:'#ece2d8', sw:1.5});
+    y += dh + 18;
+  }
+
+  // ── investimento (centralizado, com respiro) ──
+  y += 34;
+  txt('INVESTIMENTO', W/2, y, {serif:true, s:TIT, w:600, anchor:'middle'});
+  y += 18;
+  line(M, y, W-M, y, '#ece2d8', 1.5);
+  y += 56;
+
+  const linhaItem = (desc, val) => {
+    txt(desc, M, y, {s:TXT, w:500});
+    txt(moeda(val), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 36;
+  };
+
+  if(!estado.kit && !estado.itens.length){
+    txt('Escolha um kit ou adicione itens', M, y, {s:TXT, fill:'#bbb'});
+    y += 36;
+  }
+  // kit: título, itens descritos (maiores), e o valor depois dos itens
+  if(estado.kit){
+    const nomeKit = (/^kit\b/i.test(estado.kit.nome) ? estado.kit.nome : 'Kit ' + estado.kit.nome).toUpperCase();
+    txt(nomeKit, M, y, {s:TIT, w:600});
+    y += 32;
+    const incl = (estado.kit.inclui || []).join('   ·   ');
+    if(incl){
+      quebraPx(incl, TXT).forEach(l => { txt(l, M, y, {s:TXT, fill:'#777'}); y += 26; });
+    }
+    y += 10;
+    txt(moeda(t.kit), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 34;
+  }
+  if(estado.itens.length){
+    if(estado.kit) line(M, y-12, W-M, y-12, '#f2ebe3', 1);
+    estado.itens.forEach(it => linhaItem(it.desc, it.val));
+  }
+  // entrega: divisor sutil e centralizado, com mesmo respiro acima e abaixo
+  if(t.entrega > 0){
+    const G = 26, lw = cw*0.42;
+    y += G;
+    line(W/2 - lw/2, y, W/2 + lw/2, y, '#ece2d8', 1);
+    y += G;
+    linhaItem(estado.entregaDesc || 'Entrega', t.entrega);
+  }
+
+  // ── total (mesma fonte dos demais valores) ──
+  y += 12;
+  rect(M, y, cw, 74, {r:14, fill:'#fdf3f6'});
+  txt('TOTAL', M+26, y+47, {s:TIT, w:600, fill:'#c9607c', ls:2});
+  txt(moeda(t.total), W-M-26, y+47, {s:TIT+2, w:600, fill:'#c9607c', anchor:'end'});
+  y += 96;
+
+  if(t.sinal > 0){
+    txt('Sinal p/ reserva' + (t.pct!==null ? ' (' + t.pct + '%)' : ''), M, y, {s:TXT, fill:'#888'});
+    txt(moeda(t.sinal), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 28;
+    txt('Valor restante', M, y, {s:TXT, fill:'#888'});
+    txt(moeda(t.restante), W-M, y, {s:TXT, w:500, anchor:'end'});
+    y += 36;
+  }
+
+  // ── condições ──
+  if(estado.obs){
+    y += 12;
+    line(M, y, W-M, y, '#ece2d8', 1.5);
+    y += 36;
+    txt('CONDIÇÕES / OBSERVAÇÕES', W/2, y, {serif:true, s:TIT, w:600, anchor:'middle'});
+    y += 30;
+    quebraPx(estado.obs, TXT).forEach(l => { txt(l, M, y, {s:TXT, fill:'#666'}); y += 25; });
+  }
+
+  // ── altura final + rodapé ──
+  y += 36;
+  let H = FORMATOS[formato][1];
+  const rodape = 120;
+  H = (formato === 'retrato') ? y + rodape : Math.max(H, y + rodape);
+
+  line(M, H-96, W-M, H-96, '#ece2d8', 1.5);
+  txt(cfg('contato1_nome','Gabriel') + ' · ' + cfg('contato1_tel',''), M, H-64, {s:TXT});
+  txt(cfg('contato2_nome','Mayara') + ' · ' + cfg('contato2_tel',''), M, H-36, {s:TXT});
+  txt(cfg('regiao','Curitiba e região'), W-M, H-64, {s:TXT, fill:'#888', anchor:'end'});
+  txt(cfg('instagram','@gmcelebrart'), W-M, H-36, {s:TXT, fill:'#c9607c', anchor:'end'});
+  if(estado.validade){
+    txt(('Proposta válida por ' + estado.validade).toUpperCase(), W/2, H-50,
+        {s:TXT+2, fill:'#c9607c', w:600, anchor:'middle', ls:1});
+  }
+
+  // molduras (atrás de tudo)
+  P.unshift({t:'rect', x:20, y:20, w:W-40, h:H-40, r:26, fill:'#ffffff', stroke:'#f0e7df', sw:2});
+  P.unshift({t:'rect', x:0, y:0, w:W, h:H, r:0, fill:'#faf6f2'});
+
+  return {prims:P, W, H};
+}
+
+/* quebra de linha medindo a largura real (usa canvas; cai p/ heurística sem canvas) */
+let _medCtx = null;
+function quebrarLargura(texto, maxPx, fontSpec){
+  if(!_medCtx){ try{ _medCtx = document.createElement('canvas').getContext('2d'); }catch(e){ _medCtx = null; } }
+  if(_medCtx) _medCtx.font = fontSpec;
+  const larg = s => _medCtx ? _medCtx.measureText(s).width : s.length * 8.6;
+  if(_medCtx && larg('M') === 0) return quebrar(texto, Math.floor(maxPx/8.6)); // canvas sem medição
+  const palavras = (texto || '').split(/\s+/);
+  const linhas = []; let atual = '';
+  for(const p of palavras){
+    const teste = atual ? atual + ' ' + p : p;
+    if(larg(teste) > maxPx && atual){ linhas.push(atual); atual = p; }
+    else atual = teste;
+  }
+  if(atual) linhas.push(atual);
+  return linhas.length ? linhas : [''];
+}
+
+/* ───── emissor SVG (preview) ───── */
+function layoutParaSVG(L){
+  const fam = s => s ? "'Cormorant Garamond',serif" : "'Jost',sans-serif";
+  let cid = 0, defs = '', body = '';
+  for(const p of L.prims){
+    if(p.t === 'rect'){
+      body += `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}" ` +
+        `fill="${p.fill||'none'}" ${p.stroke?`stroke="${p.stroke}" stroke-width="${p.sw}"`:''}/>`;
+    } else if(p.t === 'line'){
+      body += `<line x1="${p.x1}" y1="${p.y1}" x2="${p.x2}" y2="${p.y2}" stroke="${p.stroke}" stroke-width="${p.sw}"/>`;
+    } else if(p.t === 'text'){
+      body += `<text x="${p.x}" y="${p.y}" font-family="${fam(p.serif)}" font-size="${p.s}" ` +
+        `font-weight="${p.w}" fill="${p.fill}" ${p.anchor!=='start'?`text-anchor="${p.anchor}"`:''} ` +
+        `letter-spacing="${p.ls}">${esc(p.str)}</text>`;
+    } else if(p.t === 'img'){
+      if(p.fit === 'crop'){
+        const id = 'cl'+(cid++);
+        defs += `<clipPath id="${id}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}"/></clipPath>`;
+        if(p.iw && p.ih){
+          const baseS = Math.max(p.w/p.iw, p.h/p.ih);
+          const s = baseS * (p.zoom||100)/100;
+          const dw = p.iw*s, dh = p.ih*s;
+          const dx = p.x + (p.w-dw)*((p.ox??50)/100);
+          const dy = p.y + (p.h-dh)*((p.oy??50)/100);
+          body += `<image href="${p.href}" x="${dx}" y="${dy}" width="${dw}" height="${dh}" preserveAspectRatio="none" clip-path="url(#${id})"/>`;
+        } else {
+          // sem dimensões ainda: mostra a foto inteira dentro do box
+          body += `<image href="${p.href}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="xMidYMid meet" clip-path="url(#${id})"/>`;
+        }
+      } else {
+        const par = p.fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet';
+        if(p.r){
+          const id = 'cl'+(cid++);
+          defs += `<clipPath id="${id}"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="${p.r}"/></clipPath>`;
+          body += `<image href="${p.href}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="${par}" clip-path="url(#${id})"/>`;
+        } else {
+          body += `<image href="${p.href}" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" preserveAspectRatio="${par}"/>`;
+        }
+      }
+    }
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${L.W} ${L.H}" width="${L.W}" height="${L.H}"><defs>${defs}</defs>${body}</svg>`;
+}
+
+/* ───── emissor canvas (export) — desenha tudo direto, sem SVG ───── */
+function carregarImgs(hrefs){
+  const unicos = [...new Set(hrefs)];
+  return Promise.all(unicos.map(h => new Promise(res => {
+    const im = new Image();
+    im.onload = () => res([h, im]);
+    im.onerror = () => res([h, null]);
+    im.src = h;
+  }))).then(pares => Object.fromEntries(pares));
+}
+function caminhoRRect(cx, x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  cx.beginPath();
+  if(cx.roundRect){ cx.roundRect(x, y, w, h, r); return; }
+  cx.moveTo(x+r, y);
+  cx.arcTo(x+w, y, x+w, y+h, r);
+  cx.arcTo(x+w, y+h, x, y+h, r);
+  cx.arcTo(x, y+h, x, y, r);
+  cx.arcTo(x, y, x+w, y, r);
+  cx.closePath();
+}
+function layoutParaCanvas(L){
+  const hrefs = L.prims.filter(p => p.t === 'img').map(p => p.href);
+  return carregarImgs(hrefs).then(imgs => {
+    const cv = document.createElement('canvas');
+    cv.width = L.W; cv.height = L.H;
+    const cx = cv.getContext('2d');
+    cx.textBaseline = 'alphabetic';
+    const temLS = ('letterSpacing' in cx);
+    for(const p of L.prims){
+      if(p.t === 'rect'){
+        caminhoRRect(cx, p.x, p.y, p.w, p.h, p.r);
+        if(p.fill){ cx.fillStyle = p.fill; cx.fill(); }
+        if(p.stroke){ cx.strokeStyle = p.stroke; cx.lineWidth = p.sw; cx.stroke(); }
+      } else if(p.t === 'line'){
+        cx.beginPath(); cx.moveTo(p.x1, p.y1); cx.lineTo(p.x2, p.y2);
+        cx.strokeStyle = p.stroke; cx.lineWidth = p.sw; cx.stroke();
+      } else if(p.t === 'text'){
+        cx.font = `${p.w} ${p.s}px ${p.serif?"'Cormorant Garamond', serif":"'Jost', sans-serif"}`;
+        cx.fillStyle = p.fill;
+        cx.textAlign = p.anchor === 'end' ? 'right' : (p.anchor === 'middle' ? 'center' : 'left');
+        if(temLS) cx.letterSpacing = (p.ls||0) + 'px';
+        cx.fillText(p.str, p.x, p.y);
+        if(temLS) cx.letterSpacing = '0px';
+      } else if(p.t === 'img'){
+        const im = imgs[p.href];
+        if(!im){ continue; }
+        cx.save();
+        if(p.r){ caminhoRRect(cx, p.x, p.y, p.w, p.h, p.r); cx.clip(); }
+        const iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+        if(p.fit === 'crop' && p.iw && p.ih){
+          const baseS = Math.max(p.w/p.iw, p.h/p.ih);
+          const s = baseS * (p.zoom||100)/100;
+          const dw = p.iw*s, dh = p.ih*s;
+          cx.drawImage(im, p.x + (p.w-dw)*((p.ox??50)/100), p.y + (p.h-dh)*((p.oy??50)/100), dw, dh);
+        } else if(p.fit === 'crop'){
+          // sem dimensões declaradas: foto inteira dentro do box
+          const f = Math.min(p.w/iw, p.h/ih);
+          const dw = iw*f, dh = ih*f;
+          cx.drawImage(im, p.x + (p.w-dw)/2, p.y + (p.h-dh)/2, dw, dh);
+        } else {
+          const f = p.fit === 'cover' ? Math.max(p.w/iw, p.h/ih) : Math.min(p.w/iw, p.h/ih);
+          const dw = iw*f, dh = ih*f;
+          cx.drawImage(im, p.x + (p.w-dw)/2, p.y + (p.h-dh)/2, dw, dh);
+        }
+        cx.restore();
+      }
+    }
+    return cv;
+  });
+}
+
+/* garante imgW/imgH mesmo para imagens salvas antes (auto-recupera) */
+let _imgCache = {};
+function garantirDimsImg(){
+  if(!estado.img) return;
+  if(estado.imgW && estado.imgH) return;
+  const c = _imgCache[estado.img];
+  if(c){ estado.imgW = c.w; estado.imgH = c.h; return; }
+  const im = new Image();
+  im.onload = () => {
+    _imgCache[estado.img] = {w: im.naturalWidth, h: im.naturalHeight};
+    if(estado.img){ estado.imgW = im.naturalWidth; estado.imgH = im.naturalHeight; atualizar(); }
+  };
+  im.src = estado.img;
+}
+
+function atualizar(){
+  coletar();
+  garantirDimsImg();
+  const svg = layoutParaSVG(montarLayout());
+  $('wrap-svg').innerHTML = svg.replace('<svg ', '<svg id="svg-prev" ');
+  agendarSalvar();
+}
+
+/* ───── imagem opcional ───── */
+function renderImagem(){
+  const zona = $('zona-img');
+  if(estado.img){
+    zona.innerHTML = `<div class="previa-img">
+      <img src="${estado.img}" alt="prévia">
+      <button class="tira" id="bt-tira-img" title="Remover">×</button>
+      <button class="trocar" id="bt-troca-img">Trocar</button>
+    </div>
+    <div class="ajuste-img">
+      <div class="ajuste-cab">
+        <span>Ajuste da foto</span>
+        <button id="bt-reset-img" title="Mostrar inteira">↺ Inteira</button>
+      </div>
+      <label>Zoom <small>(100% = foto inteira)</small></label>
+      <input type="range" id="sl-img-zoom" min="100" max="280" value="${estado.imgZoom||100}">
+      <label>Posição <small id="pos-dica">(dê zoom para poder mover)</small></label>
+      <div class="ajuste-2col">
+        <div><label>Horizontal</label><input type="range" id="sl-img-x" min="0" max="100" value="${estado.imgX??50}"></div>
+        <div><label>Vertical</label><input type="range" id="sl-img-y" min="0" max="100" value="${estado.imgY??50}"></div>
+      </div>
+    </div>`;
+    $('bt-tira-img').onclick = () => { estado.img = null; renderImagem(); atualizar(); };
+    $('bt-troca-img').onclick = () => $('inp-img').click();
+    const togglePos = () => {
+      const dis = (estado.imgZoom||100) <= 100;
+      $('sl-img-x').disabled = dis; $('sl-img-y').disabled = dis;
+      const dica = $('pos-dica');
+      if(dica) dica.textContent = dis ? '(dê zoom para poder mover)' : '(arraste para enquadrar)';
+    };
+    $('sl-img-zoom').addEventListener('input', e => { estado.imgZoom = +e.target.value; togglePos(); atualizar(); });
+    $('sl-img-x').addEventListener('input', e => { estado.imgX = +e.target.value; atualizar(); });
+    $('sl-img-y').addEventListener('input', e => { estado.imgY = +e.target.value; atualizar(); });
+    togglePos();
+    $('bt-reset-img').onclick = () => {
+      estado.imgZoom = 100; estado.imgX = 50; estado.imgY = 50;
+      $('sl-img-zoom').value = 100; $('sl-img-x').value = 50; $('sl-img-y').value = 50;
+      togglePos(); atualizar();
+    };
+  } else {
+    zona.innerHTML = `<div class="dropzone" id="dropzone"><span class="emoji">🖼️</span>Toque para anexar uma imagem</div>`;
+    $('dropzone').onclick = () => $('inp-img').click();
+  }
+}
+function redimensionar(dataURL, max, cb){
+  const img = new Image();
+  img.onload = () => {
+    let {width:w, height:h} = img;
+    if(Math.max(w,h) > max){ const f = max/Math.max(w,h); w = Math.round(w*f); h = Math.round(h*f); }
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    cv.getContext('2d').drawImage(img, 0, 0, w, h);
+    cb(cv.toDataURL('image/jpeg', 0.86), w, h);
+  };
+  img.src = dataURL;
+}
+$('inp-img').addEventListener('change', e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => redimensionar(r.result, 1400, (d, w, h) => {
+    estado.img = d; estado.imgW = w; estado.imgH = h;
+    _imgCache[d] = {w, h};
+    estado.imgZoom = 100; estado.imgX = 50; estado.imgY = 50;
+    renderImagem(); atualizar();
+  });
+  r.readAsDataURL(f);
+  e.target.value = '';
+});
+
+/* ───── exportação ───── */
+function nomeArquivo(ext){
+  const c = (estado.cliente || 'proposta').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  return `gm-celebrart-${c}.${ext}`;
+}
+/* iOS/iPadOS: Safari ignora a.download e bloqueia click assíncrono; melhor abrir em nova aba */
+function ehIOS(){
+  const ua = navigator.userAgent || '';
+  return /iP(hone|ad|od)/.test(ua) || (/Mac/.test(navigator.platform||'') && navigator.maxTouchPoints > 1);
+}
+/* fonts.ready pode nunca resolver (fonte bloqueada/arquivo local) — corre contra um limite */
+function fontsProntas(){
+  const t = new Promise(r => setTimeout(r, 1500));
+  const f = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  return Promise.race([f, t]);
+}
+/* entrega o blob: baixa no desktop, abre em aba nova no iOS */
+function entregar(blob, filename, janelaPre){
+  const url = URL.createObjectURL(blob);
+  if(janelaPre){                       // aba já aberta no gesto (iOS)
+    janelaPre.location.href = url;
+    setTimeout(() => URL.revokeObjectURL(url), 15000);
+    return true;                        // abriu
+  }
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+  return false;                         // baixou
+}
+function blobPNG(cv){ return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('canvas vazio')), 'image/png')); }
+function blobPDF(cv){
+  const jpeg = cv.toDataURL('image/jpeg', 0.92).split(',')[1];
+  const bin = atob(jpeg);
+  const bytes = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return montarPDF(bytes, cv.width, cv.height);
+}
+function blobBase64(blob){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result).split(',')[1]);
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(blob);
+  });
+}
+function registrarProposta(url){
+  const t = totais();
+  srv('propostaRegistrar', {
+    numero: estado.numero, emitida: hojeISO(), cliente: estado.cliente, zap: estado.zap, tema: estado.tema,
+    data: estado.data, modalidade: ehMontado() ? 'Montada' : 'Pegue e Monte',
+    kit: estado.kit ? estado.kit.nome : '', total: t.total, sinal: t.sinal, restante: t.restante, arquivo: url || ''
+  }).catch(e => console.error(e));
+}
+/* gera o arquivo, baixa no aparelho (fora do iOS), salva no Drive e registra na aba Propostas */
+function exportar(tipo){
+  coletar();
+  avisar(tipo === 'pdf' ? 'Gerando PDF…' : 'Gerando imagem…');
+  const win = ehIOS() ? window.open('', '_blank') : null;   // iOS: a aba precisa abrir no toque
+  garantirNumero()
+    .then(() => fontsProntas())
+    .then(() => layoutParaCanvas(montarLayout()))
+    .then(cv => tipo === 'pdf' ? blobPDF(cv) : blobPNG(cv))
+    .then(blob => {
+      const nome = nomeArquivo(tipo);
+      if(!win) entregar(blob, nome, null);
+      toast('Salvando no Drive…', 6000);
+      return blobBase64(blob)
+        .then(b64 => srv('salvarArquivoProposta', nome, b64, blob.type))
+        .then(arq => {
+          if(win) win.location.href = arq.url;
+          registrarProposta(arq.url);
+          toast((win ? 'Aberto' : 'Baixado') + ' e salvo no Drive ✓ <a href="' + esc(arq.url) + '" target="_blank" rel="noopener">abrir</a>', 6000, true);
+        })
+        .catch(e => {
+          console.error(e);
+          if(win) entregar(blob, nome, win);
+          registrarProposta('');
+          toast('Gerado, mas não salvou no Drive: ' + (e.message || e), 6000);
+        });
+    })
+    .catch(err => { if(win) win.close(); avisar('Erro ao gerar arquivo'); console.error(err); });
+}
+function baixarPNG(){ exportar('png'); }
+function baixarPDF(){ exportar('pdf'); }
+
+/* monta um PDF mínimo (uma página) com a imagem JPEG embutida */
+function montarPDF(jpegBytes, iw, ih){
+  const pw = 595.28;                       // largura A4 em pt
+  const ph = pw * ih / iw;                 // altura proporcional à imagem
+  const enc = s => new TextEncoder().encode(s);
+  const partes = [];
+  const offsets = [];
+  let pos = 0;
+  const push = chunk => { partes.push(chunk); pos += chunk.length; };
+  const obj = (n, txt) => { offsets[n] = pos; push(enc(txt)); };
+
+  push(enc('%PDF-1.4\n%\xFF\xFF\xFF\xFF\n'));
+  obj(1, '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  obj(2, '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+  obj(3, `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw.toFixed(2)} ${ph.toFixed(2)}] ` +
+         `/Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>\nendobj\n`);
+  // objeto 4: imagem
+  offsets[4] = pos;
+  push(enc(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${iw} /Height ${ih} ` +
+           `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegBytes.length} >>\nstream\n`));
+  push(jpegBytes);
+  push(enc('\nendstream\nendobj\n'));
+  // objeto 5: conteúdo (desenha a imagem cobrindo a página)
+  const cont = `q\n${pw.toFixed(2)} 0 0 ${ph.toFixed(2)} 0 0 cm\n/Im0 Do\nQ\n`;
+  obj(5, `5 0 obj\n<< /Length ${enc(cont).length} >>\nstream\n${cont}endstream\nendobj\n`);
+
+  const xrefPos = pos;
+  let xref = `xref\n0 6\n0000000000 65535 f \n`;
+  for(let i = 1; i <= 5; i++) xref += String(offsets[i]).padStart(10,'0') + ' 00000 n \n';
+  push(enc(xref));
+  push(enc(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`));
+
+  return new Blob(partes, {type:'application/pdf'});
+}
+
+/* ───── copiar texto p/ WhatsApp ───── */
+function textoWhatsApp(){
+  coletar();
+  const t = totais();
+  const L = [];
+  L.push('*GM CelebrArt · Proposta de Decoração*');
+  if(estado.cliente) L.push('Para: ' + estado.cliente);
+  if(estado.tema) L.push('Tema: ' + estado.tema);
+  const quem = [estado.aniv, estado.idade].filter(Boolean).join(' · ');
+  if(quem) L.push('Festa: ' + quem);
+  if(estado.data) L.push('Data: ' + dataBR(estado.data));
+  if(estado.local) L.push('Local: ' + estado.local);
+  L.push('');
+  if(estado.kit){
+    L.push('*Kit ' + estado.kit.nome + '* — ' + moeda(t.kit));
+    if(estado.kit.inclui && estado.kit.inclui.length)
+      L.push('Inclui: ' + estado.kit.inclui.join(', '));
+  }
+  estado.itens.forEach(i => L.push('• ' + i.desc + ' — ' + moeda(i.val)));
+  if(t.entrega > 0) L.push('• ' + (estado.entregaDesc||'Entrega') + ' — ' + moeda(t.entrega));
+  L.push('');
+  L.push('*Total: ' + moeda(t.total) + '*');
+  if(t.sinal > 0){
+    L.push('Sinal p/ reserva' + (t.pct!==null ? ' (' + t.pct + '%)' : '') + ': ' + moeda(t.sinal));
+    L.push('Valor restante: ' + moeda(t.restante));
+  }
+  if(estado.validade) L.push('');
+  if(estado.validade) L.push('_Proposta válida por ' + estado.validade + '._');
+  L.push('');
+  L.push(cfg('contato1_nome','Gabriel') + ' ' + cfg('contato1_tel','') + ' · ' + cfg('contato2_nome','Mayara') + ' ' + cfg('contato2_tel',''));
+  return L.join('\n');
+}
+$('bt-copiar').onclick = () => {
+  const txt = textoWhatsApp();
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(() => avisar('Texto copiado ✓'),
+                                            () => copiaFallback(txt));
+  } else copiaFallback(txt);
+};
+function copiaFallback(txt){
+  const ta = document.createElement('textarea');
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); avisar('Texto copiado ✓'); }
+  catch(e){ avisar('Copie manualmente'); }
+  ta.remove();
+}
+
+/* ───── persistência + modelos ───── */
+let salvarTimer = null;
+function agendarSalvar(){ clearTimeout(salvarTimer); salvarTimer = setTimeout(() => {
+  if(!LSX.set('gm_prop_atual', JSON.stringify(estado)))
+    LSX.set('gm_prop_atual', JSON.stringify(Object.assign({}, estado, {img:null, imgW:null, imgH:null})));
+}, 600); }
+
+function novaProposta(silencioso){
+  estado = {
+    numero: '', cliente:'', zap:'', tema:'', aniv:'', idade:'', data:'', local:'',
+    kit:null, itens:[], entregaDesc:'Entrega e retirada', entregaVal:'',
+    sinal:SINAL_PADRAO, sinalTipo:'valor', modalidade:'montado', validade:VALIDADE_PADRAO,
+    obs:OBS_PADRAO.montado,
+    img:null, imgW:null, imgH:null, imgZoom:100, imgX:50, imgY:50
+  };
+  if(silencioso) return;
+  preencherForm(); atualizar();
+  avisar('Nova proposta');
+}
+
+/* modelos ficam na aba "Modelos" da planilha (sem a foto: a célula não comporta imagem) */
+function salvarModelo(){
+  coletar();
+  const nome = estado.cliente || estado.tema || 'Modelo';
+  const dados = JSON.parse(JSON.stringify(estado));
+  dados.img = null; dados.imgW = null; dados.imgH = null; dados.numero = '';
+  avisar('Salvando modelo…');
+  srv('modeloSalvar', nome, dados)
+    .then(() => avisar('Modelo salvo ✓' + (estado.img ? ' (sem a foto)' : '')))
+    .catch(e => avisar('Não salvou: ' + e.message));
+}
+function listarModelos(modelos){
+  const box = $('lista-modelos');
+  if(!modelos.length){ box.innerHTML = '<p style="color:#888;text-align:center;font-size:13.5px">Nenhum modelo salvo ainda.</p>'; return; }
+  box.innerHTML = modelos.map(m => `
+    <div class="modelo-linha" data-id="${esc(m.id)}">
+      <div class="nome">${esc(m.nome)}<small>${esc(m.dados.tema||'')} · ${esc(dataBR(m.em))}</small></div>
+      <button class="usar">Usar</button>
+      <button class="apagar" title="Apagar">🗑️</button>
+    </div>`).join('');
+  box.querySelectorAll('.usar').forEach(b => b.onclick = () => {
+    const m = modelos.find(x => x.id === b.closest('.modelo-linha').dataset.id);
+    if(!m) return;
+    novaProposta(true);
+    estado = Object.assign(estado, JSON.parse(JSON.stringify(m.dados)), {numero:'', img:null, imgW:null, imgH:null});
+    preencherForm(); atualizar();
+    $('veu-modelos').classList.remove('aberto');
+    avisar('Modelo carregado');
+  });
+  box.querySelectorAll('.apagar').forEach(b => b.onclick = () => {
+    if(!confirm('Apagar este modelo?')) return;
+    b.disabled = true;
+    srv('modeloApagar', b.closest('.modelo-linha').dataset.id).then(listarModelos)
+      .catch(e => { b.disabled = false; avisar('Não apagou: ' + e.message); });
+  });
+}
+function abrirModelos(){
+  $('lista-modelos').innerHTML = '<p style="color:#888;text-align:center;font-size:13.5px">Carregando…</p>';
+  $('veu-modelos').classList.add('aberto');
+  srv('modelosListar').then(listarModelos)
+    .catch(e => { $('lista-modelos').innerHTML = '<p style="color:#a33;text-align:center">' + esc(e.message) + '</p>'; });
+}
+
+/* ───── eventos ───── */
+// máscara de telefone enquanto digita
+$('f-zap').addEventListener('input', e => { e.target.value = mascaraTel(e.target.value); });
+// capitaliza nomes/tema/local ao sair do campo
+['f-cliente','f-aniv','f-local','f-tema'].forEach(id =>
+  $(id).addEventListener('blur', e => { e.target.value = capNome(e.target.value); atualizar(); }));
+
+ROOT.querySelectorAll('.coluna-form input, .coluna-form textarea').forEach(el =>
+  el.addEventListener('input', atualizar));
+
+$('f-sinal-tipo').addEventListener('change', atualizar);
+$('f-mod').addEventListener('change', () => {
+  const obsEl=$('f-obs'), atual=obsEl.value.trim();
+  const ehPadrao = atual===OBS_PADRAO.pm || atual===OBS_PADRAO.montado || atual===OBS_ANTIGA || !atual;
+  if(ehPadrao) obsEl.value = OBS_PADRAO[$('f-mod').value];   // só troca se você não personalizou
+  atualizar();
+});
+
+$('chips-kits').innerHTML = B.kits.map(k =>
+  `<button class="chip kit" data-kit="${esc(k.nome)}">${esc(k.nome)}${k.preco !== '' ? ' · ' + esc(k.preco) : ''}</button>`).join('');
+$('chips-extras').innerHTML = B.extras.map((e, i) =>
+  `<button class="chip" data-extra-i="${i}">+ ${esc(e.nome)} ${esc(e.preco)}</button>`).join('');
+$('temas').innerHTML = B.temas.map(t => `<option value="${esc(t.tema)}"></option>`).join('');
+ROOT.querySelectorAll('.chip.kit').forEach(c => c.onclick = () => escolherKit(c.dataset.kit));
+ROOT.querySelectorAll('.chip[data-extra-i]').forEach(c => c.onclick = () => {
+  const e = B.extras[+c.dataset.extraI];
+  addItem({desc: e.nome, val: e.preco, chk: e.chk});
+  atualizar();
+});
+$('bt-add-item').onclick = () => { addItem({desc:'',val:''}); };
+
+$('fmt').querySelectorAll('button').forEach(b => b.onclick = () => {
+  $('fmt').querySelectorAll('button').forEach(x => x.classList.remove('sel'));
+  b.classList.add('sel'); formato = b.dataset.fmt; atualizar();
+});
+
+$('bt-png').onclick = baixarPNG;
+$('bt-pdf').onclick = baixarPDF;
+$('bt-salvar-modelo').onclick = salvarModelo;
+$('bt-modelos').onclick = abrirModelos;
+$('bt-novo').onclick = () => novaProposta();
+$('fechar-modelos').onclick = () => $('veu-modelos').classList.remove('aberto');
+$('veu-modelos').onclick = e => { if(e.target.id === 'veu-modelos') e.currentTarget.classList.remove('aberto'); };
+
+/* ───── init ───── */
+$('logo-topo').src = LOGO_SRC;
+(function init(){
+  const salvo = LSX.get('gm_prop_atual');
+  if(salvo){
+    try{ estado = Object.assign(estado, JSON.parse(salvo)); }catch(e){}
+  }
+  if(!estado.sinalTipo) estado.sinalTipo='valor';
+  if(!estado.modalidade) estado.modalidade='montado';
+  if(estado.obs===OBS_ANTIGA) estado.obs=OBS_PADRAO[estado.modalidade];
+  preencherForm();
+  atualizar();
+})();
+
+
+
+/* ───── ponte com a Central ───── */
+function receberOrcamento(d){
+  coletar();
+  estado.kit = {
+    nome: d.kitNome || 'Personalizado',
+    val: d.valorKit ? String(d.valorKit) : '',
+    inclui: (d.itens || []).slice()
+  };
+  if(d.temAdesivo) estado.kit.inclui.push('Adesivo personalizado no tema');
+  if(d.modalidade){
+    const obsEraPadrao = !estado.obs || estado.obs===OBS_PADRAO.pm || estado.obs===OBS_PADRAO.montado || estado.obs===OBS_ANTIGA;
+    estado.modalidade = d.modalidade;
+    if(obsEraPadrao) estado.obs = OBS_PADRAO[d.modalidade];
+  }
+  if(d.servico){
+    estado.entregaDesc = ehMontado() ? 'Montagem, entrega e retirada' : 'Entrega e retirada';
+    estado.entregaVal = String(d.servico);
+  }
+  preencherForm(); atualizar();
+  avisar('Orçamento aplicado na proposta ✓');
+}
+function dadosParaContrato(){
+  coletar(); const t = totais();
+  return {
+    cliente: estado.cliente, zap: estado.zap, tema: estado.tema, data: estado.data, local: estado.local,
+    extrasDet: estado.itens.map(i => ({desc: i.desc, chk: i.chk || ''})).filter(i => i.desc),
+    kitNome: estado.kit ? (estado.kit.nome||'') : '',
+    kitInclui: estado.kit ? estado.kit.inclui.slice() : [],
+    extras: estado.itens.map(i => i.desc).filter(Boolean),
+    valKit: t.kit, valExtras: t.extras, valEntrega: t.entrega,
+    sinal: estado.sinal, sinalTipo: estado.sinalTipo, modalidade: estado.modalidade,
+    entregaDesc: estado.entregaDesc
+  };
+}
+function setLogo(url){ if(!url) return; LOGO_SRC = url; $('logo-topo').src = url; atualizar(); }
+window.PROP = { receberOrcamento, dadosParaContrato, setLogo };
+
+}
+</script>

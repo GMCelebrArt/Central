@@ -1,0 +1,545 @@
+<script>
+/* ═══ ABA 3 · CONTRATO + CHECKLIST ═══ */
+
+/* ---------- LOGO SVG PADRÃO (recriação) ---------- */
+const LOGO_SVG = `
+<svg viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- balões -->
+  <ellipse cx="150" cy="34" rx="20" ry="25" fill="#aed4e6"/>
+  <ellipse cx="178" cy="40" rx="18" ry="23" fill="#e89ba0"/>
+  <path d="M150 59 q3 6 -1 12" stroke="#9ab" stroke-width="1.2" fill="none"/>
+  <path d="M178 63 q-3 6 1 12" stroke="#d99" stroke-width="1.2" fill="none"/>
+  <!-- caixa de presente -->
+  <rect x="108" y="78" width="44" height="34" rx="3" fill="#bcdcec"/>
+  <rect x="108" y="78" width="44" height="11" rx="2" fill="#a6cfe2"/>
+  <rect x="126" y="78" width="8" height="34" fill="#e89ba0"/>
+  <path d="M130 78 q-12 -10 -4 -2 q-10 -6 4 2 q14 -8 4 2 q8 -8 -4 2" fill="#e89ba0"/>
+  <circle cx="130" cy="78" r="4" fill="#d9787f"/>
+  <!-- letras G M -->
+  <text x="78" y="106" font-family="Georgia,serif" font-size="62" font-weight="700" fill="#2b3a67">G</text>
+  <text x="156" y="110" font-family="Georgia,serif" font-size="66" font-weight="700" fill="#e89ba0">M</text>
+  <!-- CELEBRART -->
+  <text x="130" y="138" text-anchor="middle" font-family="Georgia,serif" font-size="18" letter-spacing="3" font-weight="600">
+    <tspan fill="#2b3a67">CELEBR</tspan><tspan fill="#e89ba0">ART</tspan>
+  </text>
+</svg>`;
+
+/* ---------- LOGO DO CONTRATO: vem do Drive (Imagens/logo-contrato.*) ---------- */
+let LOGO_CONTRATO_HTML = LOGO_SVG;
+
+/* ---------- DADOS DO CATÁLOGO: preenchidos por initContrato() a partir da planilha ----------
+   CATALOGO[kit]     = { nome, preco, itens:[nomes no contrato] }       (abas Kits + ItensKit)
+   CHECKLIST_ITENS   = lista de peças do checklist                      (ItensKit, coluna A)
+   CHECKLIST_QTD[kit]= quantidade padrão de cada peça no kit            (ItensKit, colunas dos kits)
+   KIT_PERTENCE[kit] = índices das peças que fazem parte do kit (qtd>0) — o que estiver fora vira "extra"
+   EXTRAS            = itens extras do catálogo                         (aba Extras)
+   EXTRA_MAP[nome]   = índice da peça do checklist ligada ao extra */
+let CATALOGO = {}, CHECKLIST_ITENS = [], CHECKLIST_QTD = {}, KIT_PERTENCE = {}, EXTRAS = [], EXTRA_MAP = {};
+
+function idxChecklist(nome){
+  const n = String(nome||'').trim().toLowerCase();
+  return n ? CHECKLIST_ITENS.findIndex(x => x.toLowerCase() === n) : -1;
+}
+
+function initChecklistQtd(){
+  const wrap = $('chk_qtd_lista'); wrap.innerHTML='';
+  CHECKLIST_ITENS.forEach((nome,i)=>{
+    const row = document.createElement('div');
+    row.className = 'ckq-row';
+    row.innerHTML = `<span class="ckq-nome">${escHtml(nome)}</span>
+      <input type="number" id="ckq_${i}" value="0" min="0" oninput="onQtd(${i})">
+      <label class="ckq-extra" title="Marca X em Item Extra no checklist"><input type="checkbox" id="cke_${i}" onchange="render()"> extra</label>`;
+    wrap.appendChild(row);
+  });
+}
+function onQtd(i){
+  const q = Number($('ckq_'+i).value)||0;
+  const kitKey = $('sel-kit').value;
+  if(kitKey){
+    const base = KIT_PERTENCE[kitKey]||[];
+    $('cke_'+i).checked = (q>0 && !base.includes(i)); // fora do kit = extra automático
+  }
+  render();
+}
+function setChecklistQtd(kitKey){
+  const arr = CHECKLIST_QTD[kitKey]; if(!arr) return;
+  const base = KIT_PERTENCE[kitKey]||[];
+  CHECKLIST_ITENS.forEach((_,i)=>{
+    const q = i<arr.length ? arr[i] : 0;
+    if($('ckq_'+i)) $('ckq_'+i).value = q;
+    if($('cke_'+i)) $('cke_'+i).checked = (q>0 && !base.includes(i));
+  });
+}
+function carregarFoto(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => { fotoManual = r.result; render(); };
+  r.readAsDataURL(f);
+}
+
+let fotoManual = null;
+/* fotos de montagem por tema+kit (enviadas pelo Gabriel, otimizadas ~520px) */
+function fotoAtual(){
+  if(fotoManual) return fotoManual;
+  const t = $('sel-tema').value, k = $('sel-kit').value;
+  const tk = APP.img.fotos[String(t||'').toLowerCase()]; if(!tk) return null;
+  return tk[String(k||'').toLowerCase()] || Object.values(tk)[0] || null;
+}
+
+function abrirExtras(){
+  const body = $('extras-body'); body.innerHTML='';
+  EXTRAS.forEach((e,i)=>{
+    const div = document.createElement('div');
+    div.className = 'extra-opt';
+    div.innerHTML = `<input type="checkbox" id="ex_${i}">
+      <div class="eo-info">
+        <div class="eo-nome">${escHtml(e.nome)}</div>
+        <div class="eo-desc">${escHtml(e.desc)}</div>
+        <div class="eo-preco">${money(e.preco)}</div>
+      </div>
+      <input type="number" class="eo-qtd" id="exq_${i}" value="1" min="1">`;
+    body.appendChild(div);
+  });
+  $('modal-extras').classList.add('show');
+}
+function fecharExtras(){ $('modal-extras').classList.remove('show'); }
+function confirmarExtras(){
+  let soma = 0;
+  EXTRAS.forEach((e,i)=>{
+    if($('ex_'+i).checked){
+      const q = Math.max(1, Number($('exq_'+i).value)||1);
+      const idx = EXTRA_MAP[e.nome];               // reflete no checklist
+      addItem(q>1 ? `${q}x ${e.nome}` : e.nome, true, false, idx!=null ? e.chk : '');   // entra no objeto do contrato
+      soma += e.preco * q;
+      if(idx!=null && $('ckq_'+idx)){
+        $('ckq_'+idx).value = (Number($('ckq_'+idx).value)||0) + q;
+        if($('cke_'+idx)) $('cke_'+idx).checked = true;
+      }
+    }
+  });
+  if(soma>0) $('v_extra').value = (Number($('v_extra').value)||0) + soma;
+  fecharExtras();
+  calc();
+}
+
+const $ = id => document.getElementById(id);
+
+/* ---------- ITENS DO KIT ---------- */
+function addItem(valor="", extra=true, doKit=false, chk=''){
+  const row = document.createElement('div');
+  row.className = 'item-row';
+  if(doKit) row.dataset.kit = '1';
+  if(chk) row.dataset.chk = chk;     // já contado na quantidade do checklist: não duplica como item manual
+  row.innerHTML = `<input class="item-desc" type="text" value="${escHtml(valor)}" oninput="render()" onblur="this.value=ucFirst(this.value);render()" placeholder="Descrição do item">
+                   <label class="item-extra-lbl" title="Marcar X em Item Extra no checklist"><input type="checkbox" class="item-extra" ${extra?'checked':''} onchange="render()"> extra</label>
+                   <button class="btn-x" onclick="this.parentNode.remove();render()">×</button>`;
+  $('itens-lista').appendChild(row);
+}
+function getItens(){
+  return [...document.querySelectorAll('#itens-lista .item-desc')].map(i=>i.value.trim()).filter(Boolean);
+}
+function preencherCatalogo(){
+  const tema = $('sel-tema').value;
+  const kitKey = $('sel-kit').value;
+
+  // tema → campo do contrato
+  if(tema && tema!=='__custom__'){ $('c_tema').value = tema; render(); }
+  if(tema==='__custom__'){ $('c_tema').focus(); }
+
+  if(!kitKey) return;
+  if(kitKey==='__custom__'){
+    $('itens-lista').innerHTML='';
+    addItem('', true);
+    $('v_kit').value = 0;
+    CHECKLIST_ITENS.forEach((_,i)=>{ if($('ckq_'+i)) $('ckq_'+i).value=0; if($('cke_'+i)) $('cke_'+i).checked=false; });
+    $('kit-info').textContent = 'Kit personalizado: adicione os itens manualmente e ajuste as quantidades do checklist ao lado.';
+    calc();
+    return;
+  }
+  const kit = CATALOGO[kitKey];
+
+  // monta itens, ajustando a capa ao tema escolhido
+  const temaLabel = (tema && tema!=='__custom__') ? tema : ($('c_tema').value || '');
+  $('itens-lista').innerHTML='';
+  kit.itens.forEach(it=>{
+    let txt = it;
+    if(it==='Capas no tema' && temaLabel) txt = 'Capas no tema - '+temaLabel;
+    addItem(txt);
+  });
+
+  // valor do kit básico
+  $('v_kit').value = kit.preco;
+
+  // quantidades padrão do checklist
+  setChecklistQtd(kitKey);
+
+  $('kit-info').textContent = `Kit ${kit.nome} carregado: ${kit.itens.length} itens · ${money(kit.preco)}. Edite os itens ou valores se precisar.`;
+  calc();
+}
+
+/* ---------- VALORES ---------- */
+const money = n => 'R$' + (Number(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function totalCalc(){
+  return (Number($('v_kit').value)||0)+(Number($('v_extra').value)||0)+(Number($('v_entrega').value)||0);
+}
+function calc(){ $('total-disp').textContent = money(totalCalc()); render(); }
+function sinalValor(){
+  const v = Number($('v_sinal').value)||0, tot = totalCalc();
+  const pct = $('v_sinal_tipo') && $('v_sinal_tipo').value==='pct';
+  const bruto = pct ? tot*Math.min(Math.max(v,0),100)/100 : v;
+  return Math.round(Math.min(Math.max(bruto,0),tot)*100)/100;
+}
+function sinalTexto(){
+  const pct = $('v_sinal_tipo') && $('v_sinal_tipo').value==='pct';
+  return money(sinalValor()) + (pct ? ' ('+(Number($('v_sinal').value)||0)+'%)' : '');
+}
+function trocarModalidade(){
+  const pm = $('c_mod').value==='pm';
+  const aba = document.getElementById('aba-contrato');
+  aba.classList.toggle('mod-pm', pm);
+  aba.classList.toggle('mod-montado', !pm);
+  $('c_sub').textContent = pm ? 'Pegue e Monte' : 'Decoração montada';
+  $('lbl_ini').textContent = pm ? 'Entrega / Retirada' : 'Montagem';
+  $('lbl_fim').textContent = pm ? 'Devolução / Retirada' : 'Desmontagem';
+  $('lbl_vkit').textContent = pm ? 'Kit básico' : 'Decoração';
+  $('lbl_vent').textContent = pm ? 'Entrega' : 'Montagem/frete';
+  $('p_entrega_compl').placeholder = pm ? 'às 09:30hrs na nossa sede' : 'às 09:30hrs no Clube Bosch';
+  $('p_devolucao_compl').placeholder = pm ? 'às 10hrs na nossa sede' : 'às 22hrs no Clube Bosch';
+  render();
+}
+
+/* ---------- DATA BR ---------- */
+function dataBR(iso){
+  if(!iso) return '';
+  const [a,m,d]=iso.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+/* ---------- CORRETOR AUTOMÁTICO ---------- */
+function ucFirst(s){
+  s = s.replace(/^\s+/,'');
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+function maskCpfCnpj(v){
+  v = v.replace(/\D/g,'');
+  if(v.length<=11){
+    v = v.slice(0,11);
+    return v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');
+  }
+  v = v.slice(0,14);
+  return v.replace(/(\d{2})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1/$2').replace(/(\d{4})(\d{1,2})$/,'$1-$2');
+}
+function maskTel(v){
+  v = String(v||'').replace(/\D/g,'').slice(0,11);
+  if(!v) return '';   // antes devolvia "(" e o contrato saía 'Telefone: ('
+  if(v.length<=2)  return v.replace(/(\d{0,2})/,'($1');
+  if(v.length<=6)  return v.replace(/(\d{2})(\d{0,4})/,'($1) $2');
+  if(v.length<=10) return v.replace(/(\d{2})(\d{4})(\d{0,4})/,'($1) $2-$3');
+  return v.replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+}
+
+/* ---------- PERÍODO (data calendário + complemento) ---------- */
+function periodoTxt(dataId, complId){
+  const d = dataBR($(dataId).value);
+  const c = $(complId).value.trim();
+  if(d && c) return d+' '+c;
+  return d || c || '—';
+}
+
+/* ---------- DATA DO CONTRATO (calendário → dia/mês/ano) ---------- */
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function dataContratoPicker(){
+  const v = $('d_data').value; if(!v) return;
+  const [a,m,d] = v.split('-');
+  $('d_dia').value = String(Number(d));
+  $('d_mes').value = MESES[Number(m)-1];
+  $('d_ano').value = a;
+  render();
+}
+
+/* ---------- RENDER PREVIEW ---------- */
+function render(){
+  $('o_nome').textContent = $('c_nome').value || '—';
+  $('o_end').textContent  = $('c_end').value  || '—';
+  $('o_num').textContent  = $('c_num').value  || '—';
+  $('o_cpf').textContent  = $('c_cpf').value  || '—';
+  $('o_tel').textContent  = $('c_tel').value  || '—';
+  $('o_tipo').textContent = $('c_tipo').value || '—';
+  $('o_tema').textContent = $('c_tema').value || '—';
+  $('o_data').textContent = dataBR($('c_data').value) || '—';
+
+  const ul = $('o_itens'); ul.innerHTML='';
+  const itens = getItens();
+  (itens.length?itens:['—']).forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.appendChild(li);});
+
+  $('o_entrega').textContent   = periodoTxt('p_entrega_data','p_entrega_compl');
+  $('o_devolucao').textContent = periodoTxt('p_devolucao_data','p_devolucao_compl');
+
+  $('o_kit').textContent   = money($('v_kit').value);
+  $('o_extra').textContent = money($('v_extra').value);
+  $('o_ent_v').textContent = money($('v_entrega').value);
+  $('o_total').textContent = money(totalCalc());
+  $('o_sinal').textContent = sinalTexto();
+  $('o_rest').textContent  = money(totalCalc() - sinalValor());
+  if($('sinal-info')) $('sinal-info').textContent = 'Sinal: '+money(sinalValor())+' · Valor restante: '+money(totalCalc() - sinalValor());
+  $('total-disp').textContent = money(totalCalc());
+
+  $('o_dia').textContent = $('d_dia').value || '___';
+  $('o_mes').textContent = $('d_mes').value || '_______';
+  $('o_ano').textContent = $('d_ano').value || '____';
+  $('o_ass').textContent = $('c_nome').value || '_______________';
+
+  renderChecklist();
+}
+
+/* itens digitados manualmente na lista (não pertencentes ao kit) → entram no checklist como extra */
+function normNome(s){ return s.toLowerCase().replace(/\(.*?\)/g,'').replace(/-/g,' ').replace(/\s+/g,' ').trim(); }
+function itensManuaisExtras(){
+  const conhecidos = new Set();
+  Object.values(CATALOGO).forEach(k=>k.itens.forEach(it=>conhecidos.add(normNome(it))));
+  CHECKLIST_ITENS.forEach(it=>conhecidos.add(normNome(it)));
+  EXTRAS.forEach(e=>conhecidos.add(normNome(e.nome)));
+  const out=[];
+  document.querySelectorAll('#itens-lista .item-row').forEach(row=>{
+    if(row.dataset.kit==='1' || row.dataset.chk) return;
+    const inp=row.querySelector('.item-desc'); if(!inp) return;
+    const txt=(inp.value||'').trim(); if(!txt) return;
+    let nome=txt, qtd=1;
+    const m=txt.match(/^(\d+)x\s+(.*)$/i);
+    if(m){ qtd=Number(m[1]); nome=m[2].trim(); }
+    const n=normNome(nome);
+    if(!n || n.startsWith('capas no tema') || conhecidos.has(n)) return;
+    const cb=row.querySelector('.item-extra');
+    out.push({nome, qtd, extra: cb ? cb.checked : true});
+  });
+  return out;
+}
+
+function renderChecklist(){
+  $('ck_nome').textContent   = $('c_nome').value   || '—';
+  $('ck_end').textContent    = $('c_end').value    || '—';
+  $('ck_num').textContent    = $('c_num').value    || '—';
+  $('ck_bairro').textContent = $('c_bairro').value || '—';
+  $('ck_tel').textContent    = $('c_tel').value    || '—';
+  $('ck_retirada').textContent = periodoTxt('p_entrega_data','p_entrega_compl');
+  $('ck_devol').textContent    = periodoTxt('p_devolucao_data','p_devolucao_compl');
+
+  const tema = ($('c_tema').value || '').toUpperCase();
+  const kitKey = $('sel-kit').value;
+  const kitNome = kitKey==='__custom__' ? 'PERSONALIZADO' : ((kitKey && CATALOGO[kitKey]) ? CATALOGO[kitKey].nome.toUpperCase() : '');
+  $('ck_titulo').textContent = tema + (kitNome ? (tema?' - ':'') + 'KIT ' + kitNome : '') || '—';
+
+  $('ck_vkit').textContent  = money($('v_kit').value);
+  $('ck_vent').textContent  = money($('v_entrega').value);
+  $('ck_sinal').textContent = sinalTexto();
+  $('ck_rest').textContent  = money(totalCalc() - sinalValor());
+  $('ck_pgto').textContent  = $('chk_pgto').value || '—';
+  $('ck_obs').textContent   = $('chk_obs').value || '';
+
+  const foto = fotoAtual();
+  $('ck_foto').innerHTML = foto ? `<img src="${foto}" alt="montagem">` : 'foto da montagem';
+
+  const tb = $('ck_tbody'); tb.innerHTML='';
+  CHECKLIST_ITENS.forEach((nome,i)=>{
+    const q = Number($('ckq_'+i) ? $('ckq_'+i).value : 0) || 0;
+    if(q<=0) return; // entra na lista só o que realmente vai
+    const ehExtra = $('cke_'+i) ? $('cke_'+i).checked : false;
+    const extraCell = ehExtra ? '<span class="chk-box marcado">✕</span>' : '<span class="chk-box"></span>';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${nome}</td><td class="c">${q}</td>
+      <td class="c">${extraCell}</td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>`;
+    tb.appendChild(tr);
+  });
+  // itens digitados manualmente na lista (fora do kit) entram como extra
+  itensManuaisExtras().forEach(({nome,qtd,extra})=>{
+    const tr = document.createElement('tr');
+    const extraCell = extra ? '<span class="chk-box marcado">✕</span>' : '<span class="chk-box"></span>';
+    tr.innerHTML = `<td>${nome}</td><td class="c">${qtd}</td>
+      <td class="c">${extraCell}</td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>
+      <td class="c"><span class="chk-box"></span></td>`;
+    tb.appendChild(tr);
+  });
+  if(!tb.children.length){
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#aaa;padding:16px">Defina as quantidades dos itens ao lado.</td></tr>';
+  }
+}
+
+/* ---------- LOGO (salva no Drive → vale para os dois aparelhos) ---------- */
+function setLogo(html){ ['logo-1','logo-2','logo-chk'].forEach(id=>{ if($(id)) $(id).innerHTML = html; }); }
+function setLogoContratoUrl(url){
+  LOGO_CONTRATO_HTML = url ? `<img src="${url}" alt="logo">` : LOGO_SVG;
+  setLogo(LOGO_CONTRATO_HTML);
+}
+function carregarLogo(e){
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    setLogoContratoUrl(r.result);
+    toast('Salvando logo no Drive…', 5000);
+    srv('salvarImagem', 'logo-contrato', r.result)
+      .then(() => toast('Logo salva ✓'))
+      .catch(err => toast('Logo não salvou: ' + err.message, 5000));
+  };
+  r.readAsDataURL(f);
+}
+function removerLogo(){
+  if(!confirm('Remover a logo enviada e voltar para a padrão?')) return;
+  setLogoContratoUrl(null);
+  $('logo-file').value='';
+  srv('removerImagem', 'logo-contrato').then(() => toast('Logo removida')).catch(err => toast('Erro: ' + err.message));
+}
+function initLogo(){ setLogo(LOGO_CONTRATO_HTML); }
+
+/* ---------- PDF ---------- */
+function registrarContrato(){
+  const kitKey = $('sel-kit').value;
+  srv('contratoRegistrar', {
+    documento: 'Contrato', cliente: $('c_nome').value, cpf: $('c_cpf').value, tel: $('c_tel').value,
+    end: [$('c_end').value, $('c_num').value].filter(Boolean).join(', '), bairro: $('c_bairro').value,
+    tema: $('c_tema').value, kit: kitKey==='__custom__' ? 'Personalizado' : kitKey,
+    modalidade: $('c_mod').value==='pm' ? 'Pegue e Monte' : 'Montada',
+    data: $('c_data').value, inicio: periodoTxt('p_entrega_data','p_entrega_compl'),
+    fim: periodoTxt('p_devolucao_data','p_devolucao_compl'),
+    total: totalCalc(), sinal: sinalValor(), restante: totalCalc() - sinalValor()
+  }).catch(e => console.error(e));
+}
+function gerarPDF(modo){
+  const nome = ($('c_nome').value||'cliente').trim().replace(/\s+/g,'_');
+  const prefixo = modo==='checklist' ? 'Checklist_' : 'Contrato_';
+  const titulo = prefixo + 'GM_CelebrArt_' + nome;
+  render();
+  if(modo==='contrato') registrarContrato();
+
+  // 1) janela própria só com as páginas — dentro do Apps Script o print() da página inteira é instável
+  let w = null;
+  try { w = window.open('', '_blank'); if(w && !w.document) w = null; } catch(e){ w = null; }
+  if(w){
+    try{
+      const estilos = [...document.querySelectorAll('style')].map(s => s.outerHTML).join('');
+      const fontes = [...document.querySelectorAll('link[rel="stylesheet"]')].map(l => l.outerHTML).join('');
+      const aba = document.getElementById('aba-contrato').cloneNode(true);
+      aba.querySelectorAll('.painel, .mob-hint, .modal-bg').forEach(el => el.remove());
+      aba.classList.add('ativa');
+      const extra = '<style>'
+        + '#aba-contrato .app{display:block}'
+        + 'body.modo-contrato #aba-contrato .pagina-checklist{display:none}'
+        + 'body.modo-checklist #aba-contrato .pagina:not(.pagina-checklist){display:none}'
+        + '.barra-print{position:sticky;top:0;z-index:9;display:flex;gap:10px;justify-content:center;padding:10px;background:#2b3a67}'
+        + '.barra-print button{padding:10px 18px;border:none;border-radius:10px;font:600 15px Quicksand,sans-serif;background:#fff;color:#2b3a67}'
+        + '@media print{.barra-print{display:none}}'
+        + '</style>';
+      const barra = '<div class="barra-print"><button onclick="window.print()">🖨 Imprimir / Salvar PDF</button>'
+        + '<button onclick="window.close()">Fechar</button></div>';
+      w.document.open();
+      w.document.write('<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">'
+        + '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        + '<title>' + escHtml(titulo) + '</title>' + fontes + estilos + extra + '</head>'
+        + '<body class="modo-' + modo + '">' + barra + aba.outerHTML
+        + '<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},500);});<\/script>'
+        + '</body></html>');
+      w.document.close();
+      return;
+    }catch(err){ console.error('janela de impressão falhou', err); try{ w.close(); }catch(_){} }
+  }
+
+  // 2) alternativa: imprime a própria página (comportamento antigo)
+  const tmp = document.title;
+  document.body.classList.remove('modo-contrato','modo-checklist');
+  document.body.classList.add('modo-'+modo);
+  document.title = titulo;
+  let limpo = false;
+  const restaurar = () => {
+    if(limpo) return; limpo = true;
+    document.title = tmp;
+    document.body.classList.remove('modo-'+modo);
+    window.removeEventListener('afterprint', restaurar);
+  };
+  window.addEventListener('afterprint', restaurar);
+  setTimeout(() => {
+    try { window.print(); }
+    catch(err){ console.error('print falhou', err); }
+    setTimeout(restaurar, 3000);
+  }, 200);
+}
+
+/* ---------- LIMPAR ---------- */
+function limparTudo(){
+  ['c_nome','c_end','c_num','c_bairro','c_cpf','c_tel','c_data','c_tipo','c_tema','p_entrega_data','p_entrega_compl','p_devolucao_data','p_devolucao_compl','d_data','d_dia','d_mes','chk_obs'].forEach(i=>$(i).value='');
+  $('sel-tema').value=''; $('sel-kit').value='';
+  $('v_kit').value=0; $('v_extra').value=0; $('v_entrega').value=0; $('v_sinal').value=Number(cfg('sinal_padrao',50))||0; $('v_sinal_tipo').value='valor';
+  $('chk_pgto').value='Pix';
+  fotoManual=null;
+  $('chk_foto').value='';
+  $('ck_foto').innerHTML='foto da montagem';
+  CHECKLIST_ITENS.forEach((_,i)=>{ if($('ckq_'+i)) $('ckq_'+i).value=0; if($('cke_'+i)) $('cke_'+i).checked=false; });
+  $('kit-info').textContent='Selecione tema e kit para preencher os itens e o valor automaticamente. Depois você pode editar à vontade.';
+  $('itens-lista').innerHTML=''; addItem();
+  dataContratoHoje();
+  render();
+}
+
+/* data do contrato começa em hoje (antes o ano era fixo em 2026 e dia/mês vazios) */
+function dataContratoHoje(){ $('d_data').value = hojeISO(); dataContratoPicker(); }
+
+/* ---------- INIT (chamado por JsApp depois de ler a planilha) ---------- */
+function initContrato(B){
+  // catálogo de kits: só os kits que têm coluna em ItensKit com alguma peça
+  const preco = {}; B.kits.forEach(k => { preco[k.nome] = k.preco; });
+  CHECKLIST_ITENS = B.itensKit.map(r => r.item);
+  CATALOGO = {}; CHECKLIST_QTD = {}; KIT_PERTENCE = {};
+  B.kitCols.forEach(k => {
+    const qtd = B.itensKit.map(r => r.qtd[k] || 0);
+    if(!qtd.some(q => q > 0)) return;
+    CHECKLIST_QTD[k] = qtd;
+    KIT_PERTENCE[k] = qtd.map((q,i) => q > 0 ? i : -1).filter(i => i >= 0);
+    CATALOGO[k] = { nome: k, preco: Number(preco[k]) || 0,
+      itens: B.itensKit.filter(r => r.contrato && (r.qtd[k]||0) > 0).map(r => r.contrato) };
+  });
+  EXTRAS = B.extras.slice();
+  EXTRA_MAP = {};
+  EXTRAS.forEach(e => { const i = idxChecklist(e.chk); if(i >= 0) EXTRA_MAP[e.nome] = i; });
+
+  $('sel-tema').innerHTML = '<option value="">— selecione —</option>'
+    + B.temas.map(t => `<option value="${escHtml(t.tema)}">${escHtml((t.emoji ? t.emoji + ' ' : '') + t.tema)}</option>`).join('')
+    + '<option value="__custom__">✎ Outro (manual)</option>';
+  $('sel-kit').innerHTML = '<option value="">— selecione —</option>'
+    + Object.values(CATALOGO).map(k => `<option value="${escHtml(k.nome)}">${escHtml(k.nome)} · ${money(k.preco)}</option>`).join('')
+    + '<option value="__custom__">✎ Personalizado</option>';
+
+  // dados da empresa vindos da aba Config
+  ['empresa','endereco','numero','contato1_tel','contato2_tel','cidade'].forEach(k =>
+    document.querySelectorAll('#aba-contrato .cfg-' + k).forEach(el => { el.textContent = cfg(k, el.textContent); }));
+  document.querySelectorAll('#aba-contrato .cfg-multa').forEach(el => { el.textContent = money(cfg('multa_atraso', 20)); });
+  $('v_sinal').value = Number(cfg('sinal_padrao', 50)) || 0;
+
+  /* ---------- INIT / LISTENERS ---------- */
+  const SKIP = ['logo-file','c_cpf','c_tel'];
+  document.querySelectorAll('#aba-contrato input,#aba-contrato textarea').forEach(el=>{
+    if(el.type==='file') return;
+    if(SKIP.includes(el.id)) return;
+    el.addEventListener('input', render);
+  });
+
+  // máscaras em tempo real
+  $('c_cpf').addEventListener('input', e=>{ e.target.value = maskCpfCnpj(e.target.value); render(); });
+  $('c_tel').addEventListener('input', e=>{ e.target.value = maskTel(e.target.value); render(); });
+
+  // corretor (Title Case) ao sair do campo
+  ['c_nome','c_end','c_bairro','c_tipo','c_tema'].forEach(id=>{
+    $(id).addEventListener('blur', e=>{ e.target.value = titleCasePT(e.target.value); render(); });
+  });
+
+
+
+  initLogo();
+  initChecklistQtd();
+  addItem();
+  dataContratoHoje();
+  trocarModalidade();
+}
+</script>
